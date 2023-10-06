@@ -1,4 +1,5 @@
 import logging
+import os
 
 import catboost as cb
 import matplotlib.pyplot as plt
@@ -9,15 +10,7 @@ from configs.config import settings
 from utils.basic_utils import gini, save_pickle
 
 
-def fit_predict_catboost(
-    df: pd.DataFrame,
-    output_dir: str,
-    features_list: list,
-    cat_feature_list: list,
-    type_: str,
-    train_drop_cols: list,
-    model_path: str,
-):
+def fit_predict_catboost(df: pd.DataFrame):
     """
     function to fit and evaluate lightgbm for baseline
 
@@ -38,28 +31,39 @@ def fit_predict_catboost(
 
     Returns
     -------
-    results dict
+    results tuple
 
     """
 
     # split into train and test
-    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[features_list]
+    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list]
     y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[features_list]
+    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list]
     y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
 
     # init model and fit
-    cbm = cb.LGBMClassifier(**settings.SET_FEATURES.model_params)
+    logging.info('------- Fitting the model...')
+    cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params, verbose=False)
 
     model = cbm.fit(
         X_train,
         y_train,
-        eval_set=(X_test, y_test),
-        categorical_feature=cat_feature_list,
+        eval_set=(X_test, y_test),    
+        cat_features=settings.SET_FEATURES.cat_feature_list,
     )
 
     # save model in pickle file
-    save_pickle(model, model_path + type_ + '.pkl')
+    try:
+        save_pickle(
+            model,
+            f'{os.getcwd()}{settings.SET_FEATURES.model_path}/{settings.SET_FEATURES.type_}.pkl',
+        )
+    except OSError:
+        os.makedirs(os.getcwd() + settings.SET_FEATURES.model_path)
+        save_pickle(
+            model,
+            f'{os.getcwd()}{settings.SET_FEATURES.model_path}/{settings.SET_FEATURES.type_}.pkl',
+        )
 
     # evaluate results
     y_train_preds = model.predict_proba(X_train)[:, 1]
@@ -72,8 +76,13 @@ def fit_predict_catboost(
     }
 
     # save gini to txt file
-    with open(output_dir + '_gini.txt', 'w') as f:
-        f.write(str(gini_results))
+    try:
+        with open(f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/gini.txt', 'w') as f:
+            f.write(str(gini_results))
+    except OSError:
+        os.makedirs(os.getcwd() + settings.SET_FEATURES.output_dir)
+        with open(f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/gini.txt', 'w') as f:
+            f.write(str(gini_results))
 
     # get factor importance
     feature_importance = pd.DataFrame(
@@ -90,8 +99,8 @@ def fit_predict_catboost(
         y='Feature Name',
         data=feature_importance.sort_values(by='Value', ascending=False),
     )
-    plt.title('LightGBM Features')
+    plt.title(f'{settings.SET_FEATURES.type_} model feature importance')
     plt.tight_layout()
-    plt.savefig(output_dir + 'lgbm_importances_{}.png'.format(type))
-
-    return gini_results, feature_importance
+    plt.savefig(
+        f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/feature_importance.png'
+    )

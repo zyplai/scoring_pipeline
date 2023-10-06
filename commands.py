@@ -47,6 +47,7 @@ def run_scoring_pipe():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
+    fit_predict_catboost(clean_sample)
 
 
 if __name__ == '__main__':

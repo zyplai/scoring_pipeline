@@ -1,8 +1,7 @@
 [SET_FEATURES]
-model_params = {'n_iterations' = 5000, 'learning_rate' = 0.015, 'depth' = 5, 'eval_metric' = 'AUC', 'random_seed' = 123}
+model_params = {'iterations' = 5000, 'learning_rate' = 0.015, 'depth' = 5, 'loss_function' = 'Logloss', 'eval_metric' = 'AUC', 'random_seed' = 123}
 features_list = ['amount', 'duration', 'interest_rate', 'prior_loans', 'product', 'gender', 'age', 'work_experience']
 cat_feature_list = ['product', 'gender']
 type_ = 'baseline'
-train_drop_cols = []
-output_dir = ''
-model_path = ''
+output_dir = '/data'
+model_path = '/data/model_artefact'
