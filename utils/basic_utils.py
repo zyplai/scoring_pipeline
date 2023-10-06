@@ -108,6 +108,7 @@ def gini(y_true, y_score):
     gini_val = 2 * rocauc_score - 1
     return gini_val
 
+
 def snake_case(df: pd.DataFrame):
     df.columns = [x.lower().replace(' ', '_') for x in df.columns]
     return df

@@ -48,13 +48,13 @@ def fit_predict_catboost(
         .drop(train_drop_cols, axis=1)
         .reset_index(drop=True)[features_list]
     )
-    y_train = df.loc[df['is_train'] == 1, ['default_flag']].reset_index(drop=True)
+    y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
     X_test = (
         df.loc[df['is_train'] == 0]
         .drop(train_drop_cols, axis=1)
         .reset_index(drop=True)[features_list]
     )
-    y_test = df.loc[df['is_train'] == 0, ['default_flag']].reset_index(drop=True)
+    y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
 
     # init model and fit
     lgb_model = cb.LGBMClassifier(**params)

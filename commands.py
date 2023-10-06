@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import fire
 import pandas as pd
@@ -6,12 +7,12 @@ import pandas as pd
 from configs.config import settings
 from data_prep.normalize_raw_data import define_target, map_col_names
 from data_prep.sample_prep import prepare_main_sample
-from models.train import fit_predict_catboost
 from features.macro_features import prepare_macro_features
+from models.train import fit_predict_catboost
 from utils.basic_utils import read_file
 
-import warnings
 warnings.filterwarnings("ignore")
+
 
 def preprocess_raw_sample():
 
@@ -23,6 +24,7 @@ def preprocess_raw_sample():
     )
 
     return train_sample
+
 
 def enrich_with_features(df: pd.DataFrame):
 
@@ -42,7 +44,9 @@ def enrich_with_features(df: pd.DataFrame):
 
 def run_scoring_pipe():
     sample = preprocess_raw_sample()
-    clean_sample = prepare_main_sample(df = sample, test_size = settings.TRAIN_SAMPLE_PROPS.test_size)
+    clean_sample = prepare_main_sample(
+        df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
+    )
 
 
 if __name__ == '__main__':
