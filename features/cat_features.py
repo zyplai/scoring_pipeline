@@ -23,8 +23,8 @@ class WoeEncoder:
 
             # get count, number of goods and bads
             woe_df = (
-                df.groupby(feature_name)
-                .agg({target_name: ['count', 'sum']})
+                self.df.groupby(feature_name)
+                .agg({self.target_name: ['count', 'sum']})
                 .reset_index()
             )
             woe_df.columns = [feature_name, 'count', 'goods']
@@ -95,7 +95,9 @@ class CatEncoder:
 
     def fit_transform_encoder(self, cat_feature_name: str, numeric_feature_name: str):
 
-        cat_feature_encoder = self.encode_category(cat_feature_name, numeric_col_name)
+        cat_feature_encoder = self.encode_category(
+            cat_feature_name, numeric_feature_name
+        )
         self.df[f'{cat_feature_name}_encoded'] = self.df[cat_feature_name].map(
             cat_feature_encoder
         )
