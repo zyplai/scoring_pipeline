@@ -1,0 +1,13 @@
+[COLNAMES_MAPPER]
+mapper = {'client_id' = 'client_id', 'currency' = 'currency', 'amount' = 'amount', 'disbursement_date' = 'disbursement_date', 'closure_date' = 'closure_date', 'duration' = 'duration', 'interest_rate' = 'interest_rate', 'cum_days' = 'cum_days', 'prior_loans' = 'prior_loans', 'product' = 'product', 'loan_status' = 'loan_status', 'residence' = 'residence', 'disbursement_branch' = 'disbursement_branch', 'gender' = 'gender', 'age' = 'age', 'family_status' = 'family_status', 'monthly_income' = 'monthly_income', 'education_level' = 'education_level',  'dependants' = 'dependants', 'employment_sphere' = 'employment_sphere', 'work_experience' = 'work_experience', 'presence_of_car' = 'presence_of_car', 'presence_of_housing' = 'presence_of_housing'}
+
+[TRAIN_SAMPLE_PROPS]
+train_sample_path = '/Users/s.khalilbekov/Desktop/zypl/hcb_kz/data/train_data.xlsx'
+cumulative_days = 'cum_days'
+test_size = 0.25
+
+[FEATURES_PARAMS]
+partners_country = 'Kazakhstan'
+num_of_lags = 3
+window = 7
+date_col = 'disbursement_date'
