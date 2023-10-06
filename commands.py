@@ -51,4 +51,4 @@ def run_scoring_pipe():
 
 
 if __name__ == '__main__':
-    fire.Fire({"get_catalogue": run_scoring_pipe})
+    fire.Fire({"run_scoring": run_scoring_pipe})
