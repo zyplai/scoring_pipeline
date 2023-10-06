@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from configs.config import settings
 from utils.basic_utils import gini, save_pickle
 
 
 def fit_predict_catboost(
     df: pd.DataFrame,
-    params: dict,
     output_dir: str,
     features_list: list,
     cat_feature_list: list,
@@ -43,23 +43,15 @@ def fit_predict_catboost(
     """
 
     # split into train and test
-    X_train = (
-        df.loc[df['is_train'] == 1]
-        .drop(train_drop_cols, axis=1)
-        .reset_index(drop=True)[features_list]
-    )
+    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[features_list]
     y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-    X_test = (
-        df.loc[df['is_train'] == 0]
-        .drop(train_drop_cols, axis=1)
-        .reset_index(drop=True)[features_list]
-    )
+    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[features_list]
     y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
 
     # init model and fit
-    lgb_model = cb.LGBMClassifier(**params)
+    cbm = cb.LGBMClassifier(**settings.SET_FEATURES.model_params)
 
-    model = lgb_model.fit(
+    model = cbm.fit(
         X_train,
         y_train,
         eval_set=(X_test, y_test),
