@@ -16,6 +16,11 @@ In the CLI run the following commands:
 - `poetry install` - installs dependencices, virtual environment to work in
 - `poetry run python commands.py run_scoring` - runs the whole scoring pipeline on a given data
 
+### Useful Commands ###
+- `make fmt` - formats everything according to PEP-8;
+- `make clean` - removes __pycache__ files everywhere;
+- `make test` - runs testing
+
 ### Notes & TODO ###
 This is still WIP project with basic features. There are still the following tasks:
 - Develop DVC to version the data and get it remotely;
