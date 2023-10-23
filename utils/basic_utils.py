@@ -18,6 +18,10 @@ def read_file(path: str):
     if any(file_type in path for file_type in ['xlsx', 'xls', 'xlsb']):
         output = pd.read_excel(path)
 
+    # csv files
+    elif any(file_type in path for file_type in ['csv']):
+        output = pd.read_csv(path)
+
     # hdf files
     elif any(file_type in path for file_type in ['hd5', 'h5']):
         output = pd.read_hdf(path, key='df')
@@ -107,6 +111,11 @@ def gini(y_true, y_score):
     rocauc_score = roc_auc_score(y_true, y_score)
     gini_val = 2 * rocauc_score - 1
     return gini_val
+
+
+def auc_roc(y_true, y_score):
+    rocauc_score = roc_auc_score(y_true, y_score)
+    return rocauc_score
 
 
 def snake_case(df: pd.DataFrame):
