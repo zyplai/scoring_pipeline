@@ -12,7 +12,6 @@ from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import (
     gini,
     save_pickle,
-    auc_roc,
     read_file
 )
 
@@ -78,20 +77,21 @@ def predict(df: pd.DataFrame, model: str, inference: bool = False):
         blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
         map_col_names(blind_sample)
         blind_sample = blind_sample[settings.SET_FEATURES.features_list]
-        blind_preds = model.predict_proba(blind_sample)[:, 1] # noqa
+        blind_preds = model.predict_proba(blind_sample)[:, 1]
+
+        blind_sample['predictions'] = blind_preds
+
+        return blind_sample
 
     else:
-        X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
-            settings.SET_FEATURES.features_list
-        ]
-        y_train = df.loc[df['is_train'] == 1,
-                         ['target']].reset_index(drop=True)
         X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
             settings.SET_FEATURES.features_list
         ]
         y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-        y_train_preds = model.predict_proba(X_train)[:, 1]
         y_test_preds = model.predict_proba(X_test)[:, 1]
+
+        X_test['target'] = y_test
+        X_test['predictions'] = y_test_preds
 
         # create a timestamp for the current run
         current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -116,36 +116,4 @@ def predict(df: pd.DataFrame, model: str, inference: bool = False):
             # save model in pickle file
             save_pickle(model, model_path)
 
-        # calc gini on train and test
-        gini_results = {
-            'train_gini': gini(y_train, y_train_preds),
-            'test_gini': gini(y_test, y_test_preds),
-            'train_auc': auc_roc(y_train, y_train_preds),
-            'test_auc': auc_roc(y_test, y_test_preds),
-        }
-
-        # save gini to txt file
-        gini_path = f'{run_dir}/gini.txt'
-        with open(gini_path, 'w') as f:
-            f.write(str(gini_results))
-
-        # get factor importance
-        feature_importance = pd.DataFrame(
-            sorted(zip(model.feature_importances_, X_train.columns)),
-            columns=['Value', 'Feature Name'],
-        )
-        feature_importance = feature_importance.loc[
-            feature_importance['Value'] > 0
-        ].reset_index(drop=True)
-
-        # save feature importance plot
-        feature_importance_path = f'{run_dir}/feature_importance.png'
-        plt.figure(figsize=(15, 10))
-        sns.barplot(
-            x='Value',
-            y='Feature Name',
-            data=feature_importance.sort_values(by='Value', ascending=False),
-        )
-        plt.title(f'{settings.SET_FEATURES.type_} model feature importance')
-        plt.tight_layout()
-        plt.savefig(feature_importance_path)
+        return X_test

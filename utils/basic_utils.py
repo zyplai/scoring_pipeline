@@ -113,11 +113,6 @@ def gini(y_true, y_score):
     return gini_val
 
 
-def auc_roc(y_true, y_score):
-    rocauc_score = roc_auc_score(y_true, y_score)
-    return rocauc_score
-
-
 def snake_case(df: pd.DataFrame):
     df.columns = [x.lower().replace(' ', '_') for x in df.columns]
     return df
