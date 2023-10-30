@@ -13,9 +13,9 @@ from utils.basic_utils import (
 )
 
 
-def fit(df: pd.DataFrame) -> str:
+def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     """
-    function to fit and evaluate lightgbm for baseline
+    Fit and train a CatBoost classifier model.
 
     Parameters
     ----------
@@ -34,8 +34,11 @@ def fit(df: pd.DataFrame) -> str:
 
     Returns
     -------
-    str: Path to the saved model artifact.
+    CatBoostClassifier: Trained CatBoost model
 
+    This function splits the input dataframe into train and test, initializes
+    a CatBoostClassifier and fits it on the train data while evaluating on
+    the test data. It returns the trained CatBoost model.
     """
 
     # split into train and test
@@ -65,7 +68,30 @@ def fit(df: pd.DataFrame) -> str:
     return model
 
 
-def predict(df: pd.DataFrame, model: str, inference: bool = False):
+def predict(df: pd.DataFrame,
+            model: str,
+            inference: bool = False) -> pd.DataFrame:
+    """
+    Make predictions on the input data using the trained model.
+
+    Parameters:
+    df (pd.DataFrame): Dataframe containing features and labels
+    model (CatBoostClassifier): Trained CatBoost model
+    inference (bool, optional): Whether running in inference mode on blind data.
+                                Default is False.
+
+    Returns:
+    pd.DataFrame: Dataframe with predictions added as a new column
+
+    This function takes a trained CatBoost model and input data to make predictions.
+
+    If running in inference mode, it reads a separate blind sample file, makes
+    predictions on that and returns it.
+
+    Otherwise, it splits the input dataframe into train and test, makes predictions
+    on the test set and returns a dataframe with actuals and predictions. It also
+    saves the model as a pickle file.
+    """ # noqa
 
     # evaluate results
     if inference:
