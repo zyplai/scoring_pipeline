@@ -119,14 +119,14 @@ def predict(df: pd.DataFrame,
         # create a timestamp for the current run
         current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-        try:
-            # create the directory for the current run
-            run_dir = os.path.join(
+        # create the directory for the current run
+        run_dir = os.path.join(
                     os.getcwd(),
                     settings.SET_FEATURES.output_dir,
                     f'run_{current_datetime}'
                 )
-            model_artifact_dir = f'{run_dir}/model_artifact'
+        model_artifact_dir = f'{run_dir}/model_artifact'
+        try:
             model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
 
             # save model in pickle file
