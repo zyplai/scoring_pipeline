@@ -5,6 +5,7 @@ import catboost as cb
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from sklearn.metrics import roc_auc_score
 
 from configs.config import settings
 from utils.basic_utils import gini, save_pickle
@@ -48,7 +49,7 @@ def fit_predict_catboost(df: pd.DataFrame):
     model = cbm.fit(
         X_train,
         y_train,
-        eval_set=(X_test, y_test),    
+        eval_set=(X_test, y_test),
         cat_features=settings.SET_FEATURES.cat_feature_list,
     )
 
@@ -73,6 +74,8 @@ def fit_predict_catboost(df: pd.DataFrame):
     gini_results = {
         'train_gini': gini(y_train, y_train_preds),
         'test_gini': gini(y_test, y_test_preds),
+        'train_auc': roc_auc_score(y_train, y_train_preds),
+        'test_auc': roc_auc_score(y_test, y_test_preds),
     }
 
     # save gini to txt file

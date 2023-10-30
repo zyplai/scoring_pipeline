@@ -18,6 +18,10 @@ def read_file(path: str):
     if any(file_type in path for file_type in ['xlsx', 'xls', 'xlsb']):
         output = pd.read_excel(path)
 
+    # csv files
+    elif any(file_type in path for file_type in ['csv']):
+        output = pd.read_csv(path)
+
     # hdf files
     elif any(file_type in path for file_type in ['hd5', 'h5']):
         output = pd.read_hdf(path, key='df')
