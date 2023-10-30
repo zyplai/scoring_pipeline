@@ -9,5 +9,5 @@ cat_feature_list = ['product', 'status_of_loan', 'branchname', 'gender', 'marita
        'education_level', 'employment_sphere', 'employment_level',
        'is_car_asset', 'is_real_asset', 'co_borrower', 'collateral']
 type_ = 'baseline'
-output_dir = '/data'
-model_path = '/data/model_artefact'
+output_dir = 'data'
+model_path = 'data/model_artefact'

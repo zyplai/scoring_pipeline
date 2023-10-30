@@ -8,6 +8,9 @@ train_sample_path = '/home/beck/projects/work_projects/scoring_rnd/jo_ahlibank/d
 cumulative_days = 'cumulative_days_of_late_payments'
 test_size = 0.25
 
+[BLIND_SAMPLE_PROPS]
+blind_sample_path = 'path_to_data.csv'
+
 [FEATURES_PARAMS]
 partners_country = 'Jordan'
 num_of_lags = 3
