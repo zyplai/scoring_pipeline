@@ -3,14 +3,11 @@ import os
 from datetime import datetime
 
 import catboost as cb
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import (
-    gini,
     save_pickle,
     read_file
 )
