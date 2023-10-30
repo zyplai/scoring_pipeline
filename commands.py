@@ -8,7 +8,7 @@ from configs.config import settings
 from data_prep.normalize_raw_data import define_target, map_col_names
 from data_prep.sample_prep import prepare_main_sample
 from features.macro_features import prepare_macro_features
-from models.train import fit_predict_catboost
+from models.train import fit, predict
 from utils.basic_utils import read_file
 
 warnings.filterwarnings("ignore")
@@ -47,7 +47,8 @@ def run_scoring_pipe():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
-    fit_predict_catboost(clean_sample)
+    model = fit(clean_sample)
+    predict(clean_sample, model)
 
 
 if __name__ == '__main__':
