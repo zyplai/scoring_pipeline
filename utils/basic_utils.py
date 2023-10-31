@@ -97,7 +97,7 @@ def save_pickle(file, path):
     print('File has been saved to {}'.format(path))
 
 
-def load_pickle(file, path):
+def load_pickle(path, file=None):
     """
     function to save files to pickle (mostly to store ML models)
     """

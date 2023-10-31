@@ -9,11 +9,12 @@ from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import (
     save_pickle,
+    load_pickle,
     read_file
 )
 
 
-def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
+def fit(df: pd.DataFrame) -> None:
     """
     Fit and train a CatBoost classifier model.
 
@@ -34,11 +35,11 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
 
     Returns
     -------
-    CatBoostClassifier: Trained CatBoost model
+    None
 
     This function splits the input dataframe into train and test, initializes
     a CatBoostClassifier and fits it on the train data while evaluating on
-    the test data. It returns the trained CatBoost model.
+    the test data then save the model artifact.
     """
 
     # split into train and test
@@ -65,18 +66,38 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
 
     logging.info('------- Model trained...')
 
-    return model
+    # create a timestamp for the current run
+    current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    # create the directory for the current run
+    run_dir = os.path.join(
+                os.getcwd(),
+                settings.SET_FEATURES.output_dir,
+                f'run_{current_datetime}'
+            )
+    model_artifact_dir = f'{run_dir}/model_artifact'
+    try:
+        model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+        # save model in pickle file
+        save_pickle(model, model_path)
+        logging.info('------- Model saved...')
+    except OSError:
+        os.makedirs(run_dir)
+        os.makedirs(model_artifact_dir)
+        model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+        # save model in pickle file
+        save_pickle(model, model_path)
+        logging.info('------- Model saved...')
 
 
-def predict(df: pd.DataFrame,
-            model: str,
-            inference: bool = False) -> pd.DataFrame:
+def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
 
     Parameters:
     df (pd.DataFrame): Dataframe containing features and labels
-    model (CatBoostClassifier): Trained CatBoost model
     inference (bool, optional): Whether running in inference mode on blind data.
                                 Default is False.
 
@@ -89,9 +110,11 @@ def predict(df: pd.DataFrame,
     predictions on that and returns it.
 
     Otherwise, it splits the input dataframe into train and test, makes predictions
-    on the test set and returns a dataframe with actuals and predictions. It also
-    saves the model as a pickle file.
+    on the test set and returns a dataframe with actuals and predictions.
     """ # noqa
+
+    logging.info('---Model loaded...')
+    model = load_pickle(settings.MODEL_PATH.baseline_model)
 
     # evaluate results
     if inference:
@@ -115,28 +138,5 @@ def predict(df: pd.DataFrame,
 
         X_test['target'] = y_test
         X_test['predictions'] = y_test_preds
-
-        # create a timestamp for the current run
-        current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
-        # create the directory for the current run
-        run_dir = os.path.join(
-                    os.getcwd(),
-                    settings.SET_FEATURES.output_dir,
-                    f'run_{current_datetime}'
-                )
-        model_artifact_dir = f'{run_dir}/model_artifact'
-        try:
-            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
-
-            # save model in pickle file
-            save_pickle(model, model_path)
-        except OSError:
-            os.makedirs(run_dir)
-            os.makedirs(model_artifact_dir)
-            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
-
-            # save model in pickle file
-            save_pickle(model, model_path)
 
         return X_test
