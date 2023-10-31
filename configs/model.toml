@@ -13,4 +13,4 @@ output_dir = 'data'
 model_path = 'data/model_artefact'
 
 [MODEL_PATH]
-baseline_model = '/home/beck/projects/work_projects/scoring_pipeline/data/run_2023-10-31_11-58-57/model_artifact/baseline.pkl'
+baseline_model = '/home/beck/projects/work_projects/scoring_pipeline/data/run_2023-10-31_22-37-20/model_artifact/baseline.pkl'

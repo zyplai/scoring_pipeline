@@ -4,6 +4,7 @@ from datetime import datetime
 
 import catboost as cb
 import pandas as pd
+from sklearn.metrics import roc_auc_score
 
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
@@ -104,39 +105,48 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
     Returns:
     pd.DataFrame: Dataframe with predictions added as a new column
 
-    This function takes a trained CatBoost model and input data to make predictions.
+    This function takes a dataframe to make predictions by loaded model.
 
     If running in inference mode, it reads a separate blind sample file, makes
     predictions on that and returns it.
 
-    Otherwise, it splits the input dataframe into train and test, makes predictions
-    on the test set and returns a dataframe with actuals and predictions.
+    Otherwise, it makes predictions on the whole data then print AUC by train and test
+    set and returns a dataframe with actuals and predictions.
     """ # noqa
 
-    logging.info('---Model loaded...')
-    model = load_pickle(settings.MODEL_PATH.baseline_model)
+    try:
+        model = load_pickle(settings.MODEL_PATH.baseline_model)
+        logging.info('---Model loaded...')
 
-    # evaluate results
-    if inference:
+        if inference:
 
-        logging.info('---Reading blind sample and prepraing for prediction...')
-        blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
-        map_col_names(blind_sample)
-        blind_sample = blind_sample[settings.SET_FEATURES.features_list]
-        blind_preds = model.predict_proba(blind_sample)[:, 1]
+            logging.info('---Reading blind sample and prepraing for prediction...')
+            blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
+            map_col_names(blind_sample)
+            blind_sample = blind_sample[settings.SET_FEATURES.features_list]
+            blind_preds = model.predict_proba(blind_sample)[:, 1]
 
-        blind_sample['predictions'] = blind_preds
+            blind_sample['predictions'] = blind_preds
 
-        return blind_sample
+            return blind_sample
 
-    else:
-        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
-            settings.SET_FEATURES.features_list
-        ]
-        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-        y_test_preds = model.predict_proba(X_test)[:, 1]
+        else:
 
-        X_test['target'] = y_test
-        X_test['predictions'] = y_test_preds
+            df['predictions'] = model.predict_proba(
+                df[settings.SET_FEATURES.features_list])[:, 1]
 
-        return X_test
+            auc_train = roc_auc_score(
+                df[df['is_train'] == 1]['target'],
+                df[df['is_train'] == 1]['predictions'])
+
+            auc_test = roc_auc_score(
+                df[df['is_train'] == 0]['target'],
+                df[df['is_train'] == 0]['predictions'])
+
+            print("Train AUC: ", auc_train, 'Test AUC', auc_test)
+
+            return df[settings.SET_FEATURES.features_list +
+                      ['is_train', 'target', 'predictions']]
+
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}")
