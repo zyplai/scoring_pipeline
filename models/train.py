@@ -1,19 +1,21 @@
 import logging
 import os
+from datetime import datetime
 
 import catboost as cb
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-from sklearn.metrics import roc_auc_score
 
 from configs.config import settings
-from utils.basic_utils import gini, save_pickle
+from data_prep.normalize_raw_data import map_col_names
+from utils.basic_utils import (
+    save_pickle,
+    read_file
+)
 
 
-def fit_predict_catboost(df: pd.DataFrame):
+def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     """
-    function to fit and evaluate lightgbm for baseline
+    Fit and train a CatBoost classifier model.
 
     Parameters
     ----------
@@ -32,19 +34,27 @@ def fit_predict_catboost(df: pd.DataFrame):
 
     Returns
     -------
-    results tuple
+    CatBoostClassifier: Trained CatBoost model
 
+    This function splits the input dataframe into train and test, initializes
+    a CatBoostClassifier and fits it on the train data while evaluating on
+    the test data. It returns the trained CatBoost model.
     """
 
     # split into train and test
-    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list]
+    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
+        settings.SET_FEATURES.features_list
+    ]
     y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list]
+    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
+        settings.SET_FEATURES.features_list
+    ]
     y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
 
     # init model and fit
     logging.info('------- Fitting the model...')
-    cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params, verbose=False)
+    cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params,
+                                verbose=False)
 
     model = cbm.fit(
         X_train,
@@ -53,57 +63,80 @@ def fit_predict_catboost(df: pd.DataFrame):
         cat_features=settings.SET_FEATURES.cat_feature_list,
     )
 
-    # save model in pickle file
-    try:
-        save_pickle(
-            model,
-            f'{os.getcwd()}{settings.SET_FEATURES.model_path}/{settings.SET_FEATURES.type_}.pkl',
-        )
-    except OSError:
-        os.makedirs(os.getcwd() + settings.SET_FEATURES.model_path)
-        save_pickle(
-            model,
-            f'{os.getcwd()}{settings.SET_FEATURES.model_path}/{settings.SET_FEATURES.type_}.pkl',
-        )
+    logging.info('------- Model trained...')
+
+    return model
+
+
+def predict(df: pd.DataFrame,
+            model: str,
+            inference: bool = False) -> pd.DataFrame:
+    """
+    Make predictions on the input data using the trained model.
+
+    Parameters:
+    df (pd.DataFrame): Dataframe containing features and labels
+    model (CatBoostClassifier): Trained CatBoost model
+    inference (bool, optional): Whether running in inference mode on blind data.
+                                Default is False.
+
+    Returns:
+    pd.DataFrame: Dataframe with predictions added as a new column
+
+    This function takes a trained CatBoost model and input data to make predictions.
+
+    If running in inference mode, it reads a separate blind sample file, makes
+    predictions on that and returns it.
+
+    Otherwise, it splits the input dataframe into train and test, makes predictions
+    on the test set and returns a dataframe with actuals and predictions. It also
+    saves the model as a pickle file.
+    """ # noqa
 
     # evaluate results
-    y_train_preds = model.predict_proba(X_train)[:, 1]
-    y_test_preds = model.predict_proba(X_test)[:, 1]
+    if inference:
 
-    # calc gini on train and test
-    gini_results = {
-        'train_gini': gini(y_train, y_train_preds),
-        'test_gini': gini(y_test, y_test_preds),
-        'train_auc': roc_auc_score(y_train, y_train_preds),
-        'test_auc': roc_auc_score(y_test, y_test_preds),
-    }
+        logging.info('---Reading blind sample and prepraing for prediction...')
+        blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
+        map_col_names(blind_sample)
+        blind_sample = blind_sample[settings.SET_FEATURES.features_list]
+        blind_preds = model.predict_proba(blind_sample)[:, 1]
 
-    # save gini to txt file
-    try:
-        with open(f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/gini.txt', 'w') as f:
-            f.write(str(gini_results))
-    except OSError:
-        os.makedirs(os.getcwd() + settings.SET_FEATURES.output_dir)
-        with open(f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/gini.txt', 'w') as f:
-            f.write(str(gini_results))
+        blind_sample['predictions'] = blind_preds
 
-    # get factor importance
-    feature_importance = pd.DataFrame(
-        sorted(zip(model.feature_importances_, X_train.columns)),
-        columns=['Value', 'Feature Name'],
-    )
-    feature_importance = feature_importance.loc[
-        feature_importance['Value'] > 0
-    ].reset_index(drop=True)
+        return blind_sample
 
-    plt.figure(figsize=(15, 10))
-    sns.barplot(
-        x='Value',
-        y='Feature Name',
-        data=feature_importance.sort_values(by='Value', ascending=False),
-    )
-    plt.title(f'{settings.SET_FEATURES.type_} model feature importance')
-    plt.tight_layout()
-    plt.savefig(
-        f'{os.getcwd()}{settings.SET_FEATURES.output_dir}/feature_importance.png'
-    )
+    else:
+        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
+            settings.SET_FEATURES.features_list
+        ]
+        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
+        y_test_preds = model.predict_proba(X_test)[:, 1]
+
+        X_test['target'] = y_test
+        X_test['predictions'] = y_test_preds
+
+        # create a timestamp for the current run
+        current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+        # create the directory for the current run
+        run_dir = os.path.join(
+                    os.getcwd(),
+                    settings.SET_FEATURES.output_dir,
+                    f'run_{current_datetime}'
+                )
+        model_artifact_dir = f'{run_dir}/model_artifact'
+        try:
+            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+            # save model in pickle file
+            save_pickle(model, model_path)
+        except OSError:
+            os.makedirs(run_dir)
+            os.makedirs(model_artifact_dir)
+            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+            # save model in pickle file
+            save_pickle(model, model_path)
+
+        return X_test
