@@ -4,16 +4,18 @@ from datetime import datetime
 
 import catboost as cb
 import pandas as pd
+from sklearn.metrics import roc_auc_score
 
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import (
     save_pickle,
+    load_pickle,
     read_file
 )
 
 
-def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
+def fit(df: pd.DataFrame) -> None:
     """
     Fit and train a CatBoost classifier model.
 
@@ -34,11 +36,11 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
 
     Returns
     -------
-    CatBoostClassifier: Trained CatBoost model
+    None
 
     This function splits the input dataframe into train and test, initializes
     a CatBoostClassifier and fits it on the train data while evaluating on
-    the test data. It returns the trained CatBoost model.
+    the test data then save the model artifact.
     """
 
     # split into train and test
@@ -65,78 +67,85 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
 
     logging.info('------- Model trained...')
 
-    return model
+    # create a timestamp for the current run
+    current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    # create the directory for the current run
+    run_dir = os.path.join(
+                os.getcwd(),
+                settings.SET_FEATURES.output_dir,
+                f'run_{current_datetime}'
+            )
+    model_artifact_dir = f'{run_dir}/model_artifact'
+    try:
+        model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+        # save model in pickle file
+        save_pickle(model, model_path)
+        logging.info('------- Model saved...')
+    except OSError:
+        os.makedirs(run_dir)
+        os.makedirs(model_artifact_dir)
+        model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+
+        # save model in pickle file
+        save_pickle(model, model_path)
+        logging.info('------- Model saved...')
 
 
-def predict(df: pd.DataFrame,
-            model: str,
-            inference: bool = False) -> pd.DataFrame:
+def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
 
     Parameters:
     df (pd.DataFrame): Dataframe containing features and labels
-    model (CatBoostClassifier): Trained CatBoost model
     inference (bool, optional): Whether running in inference mode on blind data.
                                 Default is False.
 
     Returns:
     pd.DataFrame: Dataframe with predictions added as a new column
 
-    This function takes a trained CatBoost model and input data to make predictions.
+    This function takes a dataframe to make predictions by loaded model.
 
     If running in inference mode, it reads a separate blind sample file, makes
     predictions on that and returns it.
 
-    Otherwise, it splits the input dataframe into train and test, makes predictions
-    on the test set and returns a dataframe with actuals and predictions. It also
-    saves the model as a pickle file.
+    Otherwise, it makes predictions on the whole data then print AUC by train and test
+    set and returns a dataframe with actuals and predictions.
     """ # noqa
 
-    # evaluate results
-    if inference:
+    try:
+        model = load_pickle(settings.MODEL_PATH.baseline_model)
+        logging.info('---Model loaded...')
 
-        logging.info('---Reading blind sample and prepraing for prediction...')
-        blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
-        map_col_names(blind_sample)
-        blind_sample = blind_sample[settings.SET_FEATURES.features_list]
-        blind_preds = model.predict_proba(blind_sample)[:, 1]
+        if inference:
 
-        blind_sample['predictions'] = blind_preds
+            logging.info('---Reading blind sample and prepraing for prediction...')
+            blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+            map_col_names(blind_data)
 
-        return blind_sample
+            blind_data['predictions'] = model.predict_proba(
+                blind_data[settings.SET_FEATURES.features_list])[:, 1]
 
-    else:
-        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
-            settings.SET_FEATURES.features_list
-        ]
-        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-        y_test_preds = model.predict_proba(X_test)[:, 1]
+            return blind_data
 
-        X_test['target'] = y_test
-        X_test['predictions'] = y_test_preds
+        else:
 
-        # create a timestamp for the current run
-        current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            df['predictions'] = model.predict_proba(
+                df[settings.SET_FEATURES.features_list])[:, 1]
 
-        # create the directory for the current run
-        run_dir = os.path.join(
-                    os.getcwd(),
-                    settings.SET_FEATURES.output_dir,
-                    f'run_{current_datetime}'
-                )
-        model_artifact_dir = f'{run_dir}/model_artifact'
-        try:
-            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+            auc_train = roc_auc_score(
+                df[df['is_train'] == 1]['target'],
+                df[df['is_train'] == 1]['predictions'])
 
-            # save model in pickle file
-            save_pickle(model, model_path)
-        except OSError:
-            os.makedirs(run_dir)
-            os.makedirs(model_artifact_dir)
-            model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
+            auc_test = roc_auc_score(
+                df[df['is_train'] == 0]['target'],
+                df[df['is_train'] == 0]['predictions'])
 
-            # save model in pickle file
-            save_pickle(model, model_path)
+            print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
-        return X_test
+            return df[settings.SET_FEATURES.features_list +
+                      ['account_number', 'is_train', 'target', 'predictions']]
+
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}")
