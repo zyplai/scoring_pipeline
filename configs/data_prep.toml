@@ -1,5 +1,5 @@
 [COLNAMES_MAPPER]
-mapper = {'balance'= 'balance', 'disbursement_date'= 'disbursement_date', 'term'= 'term', 'interest_rate'= 'interest_rate', 'cumulative_days_of_late_payments'= 'cumulative_days_of_late_payments', 'product'= 'product', 'status_of_loan'= 'status_of_loan', 'branchname'= 'branchname', 'gender'= 'gender', 'customer_age'= 'customer_age', 'marital_status'= 'marital_status', 'salary'= 'salary', 'education_level'= 'education_level', 'no_of_dependents'= 'no_of_dependents', 'employment_sphere'= 'employment_sphere', 'employment_level'= 'employment_level', 'work_experience'= 'work_experience', 'is_car_asset'= 'is_car_asset', 'is_real_asset'= 'is_real_asset', 'co_borrower'= 'co_borrower', 'collateral'= 'collateral'}
+mapper = {'account_number'='account_number', 'balance'= 'balance', 'disbursement_date'= 'disbursement_date', 'term'= 'term', 'interest_rate'= 'interest_rate', 'cumulative_days_of_late_payments'= 'cumulative_days_of_late_payments', 'product'= 'product', 'status_of_loan'= 'status_of_loan', 'branchname'= 'branchname', 'gender'= 'gender', 'customer_age'= 'customer_age', 'marital_status'= 'marital_status', 'salary'= 'salary', 'education_level'= 'education_level', 'no_of_dependents'= 'no_of_dependents', 'employment_sphere'= 'employment_sphere', 'employment_level'= 'employment_level', 'work_experience'= 'work_experience', 'is_car_asset'= 'is_car_asset', 'is_real_asset'= 'is_real_asset', 'co_borrower'= 'co_borrower', 'collateral'= 'collateral'}
 
 
 
@@ -9,7 +9,7 @@ cumulative_days = 'cumulative_days_of_late_payments'
 test_size = 0.25
 
 [BLIND_SAMPLE_PROPS]
-blind_sample_path = 'path_to_data.csv'
+blind_path = 'path_to_data.csv'
 
 [FEATURES_PARAMS]
 partners_country = 'Jordan'

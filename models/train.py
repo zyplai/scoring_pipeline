@@ -121,14 +121,13 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
         if inference:
 
             logging.info('---Reading blind sample and prepraing for prediction...')
-            blind_sample = read_file(settings.BLIND_SAMPLE_PROPS.blind_sample_path)
-            map_col_names(blind_sample)
-            blind_sample = blind_sample[settings.SET_FEATURES.features_list]
-            blind_preds = model.predict_proba(blind_sample)[:, 1]
+            blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+            map_col_names(blind_data)
 
-            blind_sample['predictions'] = blind_preds
+            blind_data['predictions'] = model.predict_proba(
+                blind_data[settings.SET_FEATURES.features_list])[:, 1]
 
-            return blind_sample
+            return blind_data
 
         else:
 
@@ -143,10 +142,10 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
                 df[df['is_train'] == 0]['target'],
                 df[df['is_train'] == 0]['predictions'])
 
-            print("Train AUC: ", auc_train, 'Test AUC', auc_test)
+            print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
             return df[settings.SET_FEATURES.features_list +
-                      ['is_train', 'target', 'predictions']]
+                      ['account_number', 'is_train', 'target', 'predictions']]
 
     except (ValueError, FileNotFoundError) as e:
         print(f"Error: {e}")
