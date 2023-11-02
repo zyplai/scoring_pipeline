@@ -1,16 +1,20 @@
 [SET_FEATURES]
-model_params = {'iterations' = 5000, 'learning_rate' = 0.015, 'depth' = 5, 'loss_function' = 'Logloss', 'eval_metric' = 'AUC', 'random_seed' = 123}
-features_list = ['balance', 'term', 'interest_rate', 'product', 'status_of_loan',
-       'branchname', 'gender', 'customer_age', 'marital_status', 'salary',
-       'education_level', 'no_of_dependents', 'employment_sphere',
-       'employment_level', 'work_experience', 'is_car_asset', 'is_real_asset',
-       'co_borrower', 'collateral']
-cat_feature_list = ['product', 'status_of_loan', 'branchname', 'gender', 'marital_status',
-       'education_level', 'employment_sphere', 'employment_level',
-       'is_car_asset', 'is_real_asset', 'co_borrower', 'collateral']
-type_ = 'baseline'
+model_params = {
+       'iterations' = 500, 
+       'random_seed' = 1
+}
+features_list = [
+       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 'Education level', 
+       'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral', 'Loan amount', 'Duration at disbursement (months)', 
+       'Interest rate', 'Age', 'Monthly income', 'Quantity of prior loans', 'Quantity of dependents'
+]      
+cat_feature_list = [
+       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 'Education level', 
+       'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral'
+]
+type_ = 'adversarial validation'
 output_dir = 'data'
 model_path = 'data/model_artefact'
 
 [MODEL_PATH]
-baseline_model = '/home/beck/projects/work_projects/scoring_pipeline/data/run_2023-10-31_22-37-20/model_artifact/baseline.pkl'
+baseline_model = '/model_artifact/adv_val.pkl'
