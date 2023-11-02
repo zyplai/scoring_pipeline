@@ -144,8 +144,7 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
 
             print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
-            return df[settings.SET_FEATURES.features_list +
-                      ['account_number', 'is_train', 'target', 'predictions']]
+            return df
 
     except (ValueError, FileNotFoundError) as e:
         print(f"Error: {e}")
