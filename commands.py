@@ -10,6 +10,7 @@ from data_prep.sample_prep import prepare_main_sample
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
+from validation.adversarial_val import perform_adv_val
 from utils.basic_utils import read_file
 
 warnings.filterwarnings("ignore")
