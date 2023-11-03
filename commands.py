@@ -43,23 +43,13 @@ def enrich_with_features(df: pd.DataFrame):
     return final_df
 
 
-def run_scoring_pipe():
-    # sample = preprocess_raw_sample()
-    # clean_sample = prepare_main_sample(
-    #     df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
-    # )
-    # fit(clean_sample)
-    # predict(clean_sample)
+def run_scoring_pipe():    
+    train_data = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
+    blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
     
-    # train_data = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
-    # blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
-    
-    train_data = pd.read_excel('C:\\Users\\masrur\\code\\finca-guatemala\\data\\train_data.xlsx')
-    blind_data = pd.read_excel('C:\\Users\\masrur\\code\\finca-guatemala\\data\\blind_data.xlsx')
-                                      
     adv_auc = perform_adv_val(train_data, blind_data)
     
-    print(adv_auc)
+    print(adv_auc)    
 
 
 if __name__ == '__main__':

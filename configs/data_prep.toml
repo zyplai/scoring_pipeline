@@ -1,22 +1,13 @@
 [COLNAMES_MAPPER]
-mapper = {
-    'account_number'='account_number', 'balance'= 'balance', 'disbursement_date'= 'disbursement_date', 'term'= 'term', 
-    'interest_rate'= 'interest_rate', 'cumulative_days_of_late_payments'= 'cumulative_days_of_late_payments', 'product'= 'product', 
-    'status_of_loan'= 'status_of_loan', 'branchname'= 'branchname', 'gender'= 'gender', 'customer_age'= 'customer_age', 
-    'marital_status'= 'marital_status', 'salary'= 'salary', 'education_level'= 'education_level', 'no_of_dependents'= 'no_of_dependents', 
-    'employment_sphere'= 'employment_sphere', 'employment_level'= 'employment_level', 'work_experience'= 'work_experience', 
-    'is_car_asset'= 'is_car_asset', 'is_real_asset'= 'is_real_asset', 'co_borrower'= 'co_borrower', 'collateral'= 'collateral'
-}
-
-
+mapper = {}
 
 [TRAIN_SAMPLE_PROPS]
-train_sample_path = 'C:\\Users\\masrur\\code\\finca-guatemala\\data\\train_data.xlsx'
+train_sample_path = 'data/train_data.xlsx'
 cumulative_days = 'Cumulative days of late payments'
 test_size = 0.15
 
 [BLIND_SAMPLE_PROPS]
-blind_path = 'C:\\Users\\masrur\\code\\finca-guatemala\\data\\blind_data.xlsx'
+blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
 partners_country = 'Guatemala'

@@ -146,5 +146,5 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
 
             return df
 
-    except (ValueError, FileNotFoundError) as e:
+    except (ValueError, FileNotFoundError) as e:  # no return case during exception handling
         print(f"Error: {e}")
