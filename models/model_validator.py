@@ -25,14 +25,14 @@ def create_validator(dir, dataset_df, target_col_name, filename):
         elif dataset_df[col].dtype == 'int64':
             maxmin = {
                 'maximum': int(dataset_df[col].max()) * 2,
-                'minimum': int(dataset_df[col].min()) * 2,
+                'minimum': int(dataset_df[col].min()) // 2,
                 'type': 'integer'
             }
             validator['properties'][col] = maxmin
         elif dataset_df[col].dtype == 'float64':
             maxmin = {
                 'maximum': float(dataset_df[col].max()) * 2,
-                'minimum': float(dataset_df[col].min()) * 2,
+                'minimum': float(dataset_df[col].min()) / 2,
                 'type': 'number'
             }
             validator['properties'][col] = maxmin
