@@ -12,7 +12,8 @@ from .model_validator import create_validator
 from utils.basic_utils import (
     save_pickle,
     load_pickle,
-    read_file
+    read_file,
+    save_toml
 )
 
 
@@ -84,6 +85,7 @@ def fit(df: pd.DataFrame) -> None:
                          df[settings.SET_FEATURES.features_list],
                          'target',
                          'variable_validator')
+        save_toml(run_dir)
         # save model in pickle file
         save_pickle(model, model_path)
         logging.info('------- Model saved...')
@@ -95,6 +97,7 @@ def fit(df: pd.DataFrame) -> None:
                          df[settings.SET_FEATURES.features_list],
                          'target',
                          'variable_validator')
+        save_toml(run_dir)
         # save model in pickle file
         save_pickle(model, model_path)
         logging.info('------- Model saved...')
