@@ -36,6 +36,8 @@ def create_validator(dir, dataset_df, target_col_name, filename):
                 'type': 'number'
             }
             validator['properties'][col] = maxmin
+        else:
+            return "Wrong format (not obj, int, float)"
 
         validator['required'].append(col)
 
