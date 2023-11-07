@@ -1,3 +1,5 @@
+import os
+import shutil
 import json
 import pickle
 
@@ -76,6 +78,34 @@ def save_json(file, file_path, encoding='utf-8', ensure_ascii=False):
 
     with open(file_path, "w", encoding=encoding) as jsonfile:
         json.dump(file, jsonfile, ensure_ascii=ensure_ascii)
+
+
+def save_toml(dir_path):
+    """
+    Copy TOML configuration files from a 'configs' directory
+    to a specified directory.
+
+    Args:
+        dir_path (str): The destination directory where TOML files will be copied.
+
+    This function scans a 'configs' directory located in the current working directory
+    and copies all TOML files that have filenames starting with the specified prefixes
+    ('m' or 'd') to the specified 'dir_path'.
+
+    Example:
+    If the 'configs' directory contains TOML files like 'myconfig.toml' and 'devconfig.toml',
+    and 'dir_path' is set to '/path/to/destination', this function will copy these files to
+    '/path/to/destination' as 'myconfig.toml' and 'devconfig.toml', respectively.
+    """ # noqa
+
+    parent_dir = os.getcwd()
+    config_dir = os.path.join(parent_dir, 'configs')
+    prefixes = ['m', 'd']
+
+    for i in os.listdir(config_dir):
+        if i.endswith('.toml') and i.startswith(tuple(prefixes)):
+            shutil.copy(os.path.join(config_dir, i),
+                        os.path.join(dir_path, i))
 
 
 def read_json(file_path, root_path='C:/Users/Shuhratjon.Khalilbek/', encoding='utf-8'):
