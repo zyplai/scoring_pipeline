@@ -8,10 +8,12 @@ from sklearn.metrics import roc_auc_score
 
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
+from .model_validator import create_validator
 from utils.basic_utils import (
     save_pickle,
     load_pickle,
-    read_file
+    read_file,
+    save_toml
 )
 
 
@@ -79,7 +81,11 @@ def fit(df: pd.DataFrame) -> None:
     model_artifact_dir = f'{run_dir}/model_artifact'
     try:
         model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
-
+        create_validator(run_dir,
+                         df[settings.SET_FEATURES.features_list],
+                         'target',
+                         'variable_validator')
+        save_toml(run_dir)
         # save model in pickle file
         save_pickle(model, model_path)
         logging.info('------- Model saved...')
@@ -87,7 +93,11 @@ def fit(df: pd.DataFrame) -> None:
         os.makedirs(run_dir)
         os.makedirs(model_artifact_dir)
         model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
-
+        create_validator(run_dir,
+                         df[settings.SET_FEATURES.features_list],
+                         'target',
+                         'variable_validator')
+        save_toml(run_dir)
         # save model in pickle file
         save_pickle(model, model_path)
         logging.info('------- Model saved...')
