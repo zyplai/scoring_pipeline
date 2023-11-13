@@ -21,7 +21,9 @@ def preprocess_raw_sample():
     train_sample = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
     map_col_names(train_sample)
     define_target(
-        train_sample, cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days
+        df=train_sample, 
+        cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days,
+        number_of_days=30
     )
 
     return train_sample
