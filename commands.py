@@ -21,7 +21,9 @@ def preprocess_raw_sample():
     train_sample = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
     map_col_names(train_sample)
     define_target(
-        train_sample, cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days
+        df=train_sample, 
+        cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days,
+        number_of_days=30
     )
 
     return train_sample
@@ -43,13 +45,16 @@ def enrich_with_features(df: pd.DataFrame):
     return final_df
 
 
-def run_scoring_pipe():    
-    train_data = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
-    blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+def run_scoring_pipe():
+    sample = preprocess_raw_sample()
+    clean_sample = prepare_main_sample(
+        df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
+    )
+
+    adv_val = perform_adv_val(clean_sample)
     
-    adv_auc = perform_adv_val(train_data, blind_data)
-    
-    print(adv_auc)    
+    fit(clean_sample)
+    predict(clean_sample) 
 
 
 if __name__ == '__main__':

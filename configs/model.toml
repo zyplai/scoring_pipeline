@@ -12,9 +12,9 @@ cat_feature_list = [
        'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral'
 ]
 
-type_ = 'adversarial validation'
+type_ = 'baseline scoring model'
 output_dir = 'data'
 model_path = 'data/model_artifact'
 
 [MODEL_PATH]
-baseline_model = 'data/model_artifact/adv_val.pkl'
+baseline_model = 'data/model_artifact/trained_model.pkl'
