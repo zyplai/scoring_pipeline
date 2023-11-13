@@ -16,34 +16,19 @@ from utils.basic_utils import (
 )
 
 
-def fit(df: pd.DataFrame) -> None:
+def fit(df: pd.DataFrame) -> object:
     """
-    Fit and train a CatBoost classifier model.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        main_sample df with defined factors and is_train bool.
-    params : dict
-        params to set.
-    output_dir : str
-        directory to store results.
-    features_list : list
-        feature names to use.
-    cat_feature_list : list
-        list of categorical features.
-    type_ : str
-        baseline / final.
-
-    Returns
-    -------
-    None
-
     This function splits the input dataframe into train and test, initializes
-    a CatBoostClassifier and fits it on the train data while evaluating on
-    the test data then save the model artifact.
-    """
+    a CatBoostClassifier and fits it on the train data while evaluating on the test data then save the model artifact.
 
+    Args:
+        df (pd.DataFrame): main_sample df with defined factors and is_train bool.
+
+    Returns:
+        object: The trained CatBoost modeol
+    """    
+    df[settings.SET_FEATURES.cat_feature_list] = df[settings.SET_FEATURES.cat_feature_list].fillna('N/A')
+    
     # split into train and test
     X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
         settings.SET_FEATURES.features_list
@@ -98,14 +83,17 @@ def fit(df: pd.DataFrame) -> None:
         # save model in pickle file
         save_pickle(model, model_path)
         logging.info('------- Model saved...')
+    
+    return model
 
 
-def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
+def predict(df: pd.DataFrame, model: object, inference: bool = False) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
 
     Parameters:
     df (pd.DataFrame): Dataframe containing features and labels
+    model (object): Trained CatBoost model
     inference (bool, optional): Whether running in inference mode on blind data.
                                 Default is False.
 
@@ -122,9 +110,6 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
     """ # noqa
 
     try:
-        model = load_pickle(settings.MODEL_PATH.baseline_model)
-        logging.info('---Model loaded...')
-
         if inference:
 
             logging.info('---Reading blind sample and prepraing for prediction...')
