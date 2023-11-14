@@ -11,6 +11,7 @@ cat_feature_list = ['product', 'status_of_loan', 'branchname', 'gender', 'marita
 type_ = 'baseline'
 output_dir = 'data'
 model_path = 'data/model_artefact'
+sfa_dir = 'data/sfa_results'
 
 [SFA_PARAMS]
 model_params = {'iterations' = 500, 'learning_rate' = 0.2, 'depth' = 4}

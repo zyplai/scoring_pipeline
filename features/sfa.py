@@ -13,7 +13,7 @@ from scipy.stats import chi2_contingency
 from tqdm import tqdm
 
 from configs.config import settings
-from utils.basic_utils import gini
+from utils.basic_utils import gini, save_toml
 
 
 class SFA:
@@ -54,13 +54,13 @@ class SFA:
         cb_model = cb.CatBoostClassifier(**self.params, verbose=False)
 
         if self.df[feature_name].dtype == object:
-            model = cb_model.fit(X_train,
-                                 y_train,
-                                 cat_features=[feature_name])
+            cat_feature = [feature_name]
         else:
-            model = cb_model.fit(X_train,
-                                 y_train,
-                                 cat_features=[])
+            cat_feature = []
+
+        model = cb_model.fit(X_train,
+                             y_train,
+                             cat_features=cat_feature)
         # evaluate performance
         y_train_preds = model.predict_proba(X_train)[:, 1]
         factor_train_gini = gini(y_train, y_train_preds)
@@ -95,7 +95,7 @@ class SFA:
         # create the directory for the current run
         sfa_dir = os.path.join(
                     os.getcwd(),
-                    settings.SET_FEATURES.output_dir,
+                    settings.SET_FEATURES.sfa_dir,
                     f'sfa_result_{current_datetime}'
             )
         try:

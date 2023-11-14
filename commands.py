@@ -56,7 +56,7 @@ def run_sfa():
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
     sfa = SFA(clean_sample)
-    print(sfa.get_sfa_results())
+    sfa.get_sfa_results()
 
 
 if __name__ == '__main__':
