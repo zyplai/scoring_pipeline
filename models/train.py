@@ -17,34 +17,19 @@ from utils.basic_utils import (
 )
 
 
-def fit(df: pd.DataFrame) -> None:
+def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     """
-    Fit and train a CatBoost classifier model.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        main_sample df with defined factors and is_train bool.
-    params : dict
-        params to set.
-    output_dir : str
-        directory to store results.
-    features_list : list
-        feature names to use.
-    cat_feature_list : list
-        list of categorical features.
-    type_ : str
-        baseline / final.
-
-    Returns
-    -------
-    None
-
     This function splits the input dataframe into train and test, initializes
-    a CatBoostClassifier and fits it on the train data while evaluating on
-    the test data then save the model artifact.
-    """
+    a CatBoostClassifier and fits it on the train data while evaluating on the test data then save the model artifact.
 
+    Args:
+        df (pd.DataFrame): main_sample df with defined factors and is_train bool.
+
+    Returns:
+        object: The trained CatBoost modeol
+    """    
+    df[settings.SET_FEATURES.cat_feature_list] = df[settings.SET_FEATURES.cat_feature_list].fillna('N/A')
+    
     # split into train and test
     X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
         settings.SET_FEATURES.features_list
@@ -60,7 +45,7 @@ def fit(df: pd.DataFrame) -> None:
     cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params,
                                 verbose=False)
 
-    model = cbm.fit(
+    cbm.fit(
         X_train,
         y_train,
         eval_set=(X_test, y_test),
@@ -87,7 +72,7 @@ def fit(df: pd.DataFrame) -> None:
                          'variable_validator')
         save_toml(run_dir)
         # save model in pickle file
-        save_pickle(model, model_path)
+        save_pickle(cbm, model_path)
         logging.info('------- Model saved...')
     except OSError:
         os.makedirs(run_dir)
@@ -99,16 +84,19 @@ def fit(df: pd.DataFrame) -> None:
                          'variable_validator')
         save_toml(run_dir)
         # save model in pickle file
-        save_pickle(model, model_path)
+        save_pickle(cbm, model_path)
         logging.info('------- Model saved...')
+    
+    return cbm
 
 
-def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
+def predict(df: pd.DataFrame, model: cb.CatBoostClassifier, inference: bool = False) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
 
     Parameters:
     df (pd.DataFrame): Dataframe containing features and labels
+    model (object): Trained CatBoost model
     inference (bool, optional): Whether running in inference mode on blind data.
                                 Default is False.
 
@@ -122,39 +110,31 @@ def predict(df: pd.DataFrame, inference: bool = False) -> pd.DataFrame:
 
     Otherwise, it makes predictions on the whole data then print AUC by train and test
     set and returns a dataframe with actuals and predictions.
-    """ # noqa
+    """
 
-    try:
-        model = load_pickle(settings.MODEL_PATH.baseline_model)
-        logging.info('---Model loaded...')
+    if inference:
+        logging.info('---Reading blind sample and prepraing for prediction...')
+        blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+        map_col_names(blind_data)
 
-        if inference:
+        blind_data['predictions'] = model.predict_proba(
+            blind_data[settings.SET_FEATURES.features_list])[:, 1]
 
-            logging.info('---Reading blind sample and prepraing for prediction...')
-            blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
-            map_col_names(blind_data)
+        return blind_data
 
-            blind_data['predictions'] = model.predict_proba(
-                blind_data[settings.SET_FEATURES.features_list])[:, 1]
+    else:
+        df['predictions'] = model.predict_proba(
+            df[settings.SET_FEATURES.features_list])[:, 1]
 
-            return blind_data
+        auc_train = roc_auc_score(
+            df[df['is_train'] == 1]['target'],
+            df[df['is_train'] == 1]['predictions'])
 
-        else:
+        auc_test = roc_auc_score(
+            df[df['is_train'] == 0]['target'],
+            df[df['is_train'] == 0]['predictions'])
 
-            df['predictions'] = model.predict_proba(
-                df[settings.SET_FEATURES.features_list])[:, 1]
+        print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
-            auc_train = roc_auc_score(
-                df[df['is_train'] == 1]['target'],
-                df[df['is_train'] == 1]['predictions'])
+        return df
 
-            auc_test = roc_auc_score(
-                df[df['is_train'] == 0]['target'],
-                df[df['is_train'] == 0]['predictions'])
-
-            print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
-
-            return df
-
-    except (ValueError, FileNotFoundError) as e:
-        print(f"Error: {e}")
