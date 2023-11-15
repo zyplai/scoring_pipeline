@@ -14,7 +14,12 @@ cat_feature_list = [
 
 type_ = 'baseline scoring model'
 output_dir = 'data'
+
 model_path = 'data/model_artifact'
+sfa_dir = 'data/sfa_results'
+
+[SFA_PARAMS]
+model_params = {'iterations' = 500, 'learning_rate' = 0.2, 'depth' = 4}
 
 [MODEL_PATH]
 baseline_model = 'data/model_artifact/trained_model.pkl'

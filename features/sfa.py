@@ -2,19 +2,22 @@
 """
 @author: shuhratjon.khalilbekov@ru.ey.com
 """
+import os
+from datetime import datetime
 from itertools import product
 
-import lightgbm as lgb
+import catboost as cb
 import numpy as np
+import pandas as pd
 from scipy.stats import chi2_contingency
 from tqdm import tqdm
 
-from utils.basic_utils import *
+from configs.config import settings
+from utils.basic_utils import gini, save_toml
 
 
 class SFA:
-    def __init__(self, df: pd.DataFrame, feature_list: str, lgb_params: dict):
-
+    def __init__(self, df: pd.DataFrame):
         """
         Parameters
         ----------
@@ -31,8 +34,9 @@ class SFA:
 
         """
         self.df = df
-        self.feature_list = feature_list
-        self.lgb_params = lgb_params
+        self.feature_list = settings.SET_FEATURES.features_list
+        self.params = settings.SFA_PARAMS.model_params
+        self.cat_features = settings.SET_FEATURES.cat_feature_list
 
     def __run_sfa(self, feature_name):
         """
@@ -40,28 +44,30 @@ class SFA:
         :feature_name: feature to fit on
         """
         # get train set only
-        X_train = self.df.loc[self.df['is_train'] == 1, [feature_name]].reset_index(
-            drop=True
-        )
-        y_train = self.df.loc[self.df['is_train'] == 1, ['default_flag']].reset_index(
-            drop=True
-        )
+        X_train = self.df.loc[self.df['is_train'] == 1,
+                              [feature_name]].reset_index(drop=True)
+        y_train = self.df.loc[self.df['is_train'] == 1,
+                              ['target']].reset_index(drop=True)
+        y_train = y_train.astype('int')
 
         # init model and fit for each factor
-        lgb_model = lgb.LGBMClassifier(
-            n_estimators=self.lgb_params['n_estimators'],
-            max_depth=self.lgb_params['max_depth'],
-            learning_rate=self.lgb_params['learning_rate'],
-        )
+        cb_model = cb.CatBoostClassifier(**self.params, verbose=False)
 
-        model = lgb_model.fit(X_train, y_train, categorical_feature=[feature_name])
+        if self.df[feature_name].dtype == object:
+            cat_feature = [feature_name]
+        else:
+            cat_feature = []
 
+        model = cb_model.fit(X_train,
+                             y_train,
+                             cat_features=cat_feature)
         # evaluate performance
         y_train_preds = model.predict_proba(X_train)[:, 1]
         factor_train_gini = gini(y_train, y_train_preds)
 
         # return results
-        results = {'factor': [feature_name], 'gini': [round(factor_train_gini, 2)]}
+        results = {'factor': [feature_name],
+                   'gini': [round(factor_train_gini, 2)]}
 
         return results
 
@@ -73,15 +79,31 @@ class SFA:
         output = pd.DataFrame()
 
         for f in tqdm(self.feature_list):
-
             # run sfa
             sfa_result = self.__run_sfa(f)
 
             # concat result to main df
-            output = pd.concat([output, pd.DataFrame(sfa_result)], ignore_index=True)
+            output = pd.concat([output, pd.DataFrame(sfa_result)],
+                               ignore_index=True)
 
         # sort values for convenience
-        output = output.sort_values('gini', ascending=False).reset_index(drop=True)
+        output = output.sort_values('gini',
+                                    ascending=False).reset_index(drop=True)
+
+        current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+        # create the directory for the current run
+        sfa_dir = os.path.join(
+                    os.getcwd(),
+                    settings.SET_FEATURES.sfa_dir,
+                    f'sfa_result_{current_datetime}'
+            )
+        try:
+            output.to_csv(f'{sfa_dir}/sfa_result.csv')
+
+        except OSError:
+            os.makedirs(sfa_dir)
+            output.to_csv(f'{sfa_dir}/sfa_result.csv')
 
         return output
 
@@ -146,7 +168,6 @@ class SFA:
         output['corr'] = None
 
         for x, y in tqdm(combos):
-
             # get corr
             cor = self.cramers_v(self.df[x], self.df[y])
 
