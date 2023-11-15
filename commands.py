@@ -46,8 +46,8 @@ def run_scoring_pipe():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
-    fit(clean_sample)
-    predict(clean_sample)
+    trained_model = fit(clean_sample)
+    predictions = predict(clean_sample, trained_model)
 
 
 def run_sfa():
