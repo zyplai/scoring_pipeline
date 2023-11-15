@@ -108,6 +108,12 @@ def save_toml(dir_path):
                         os.path.join(dir_path, i))
 
 
+def save_txt(dir_path, config_content):
+
+    with open(f'{dir_path}/config.txt', 'w') as file:
+        file.write(config_content)
+
+
 def read_json(file_path, root_path='C:/Users/Shuhratjon.Khalilbek/', encoding='utf-8'):
     """function to read file as json"""
 
