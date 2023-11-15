@@ -16,7 +16,7 @@ from utils.basic_utils import (
 )
 
 
-def fit(df: pd.DataFrame) -> object:
+def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     """
     This function splits the input dataframe into train and test, initializes
     a CatBoostClassifier and fits it on the train data while evaluating on the test data then save the model artifact.
@@ -44,7 +44,7 @@ def fit(df: pd.DataFrame) -> object:
     cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params,
                                 verbose=False)
 
-    model = cbm.fit(
+    cbm.fit(
         X_train,
         y_train,
         eval_set=(X_test, y_test),
@@ -70,7 +70,7 @@ def fit(df: pd.DataFrame) -> object:
                          'target',
                          'variable_validator')
         # save model in pickle file
-        save_pickle(model, model_path)
+        save_pickle(cbm, model_path)
         logging.info('------- Model saved...')
     except OSError:
         os.makedirs(run_dir)
@@ -81,13 +81,13 @@ def fit(df: pd.DataFrame) -> object:
                          'target',
                          'variable_validator')
         # save model in pickle file
-        save_pickle(model, model_path)
+        save_pickle(cbm, model_path)
         logging.info('------- Model saved...')
     
-    return model
+    return cbm
 
 
-def predict(df: pd.DataFrame, model: object, inference: bool = False) -> pd.DataFrame:
+def predict(df: pd.DataFrame, model: cb.CatBoostClassifier, inference: bool = False) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
 
@@ -107,36 +107,31 @@ def predict(df: pd.DataFrame, model: object, inference: bool = False) -> pd.Data
 
     Otherwise, it makes predictions on the whole data then print AUC by train and test
     set and returns a dataframe with actuals and predictions.
-    """ # noqa
+    """
 
-    try:
-        if inference:
+    if inference:
+        logging.info('---Reading blind sample and prepraing for prediction...')
+        blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+        map_col_names(blind_data)
 
-            logging.info('---Reading blind sample and prepraing for prediction...')
-            blind_data = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
-            map_col_names(blind_data)
+        blind_data['predictions'] = model.predict_proba(
+            blind_data[settings.SET_FEATURES.features_list])[:, 1]
 
-            blind_data['predictions'] = model.predict_proba(
-                blind_data[settings.SET_FEATURES.features_list])[:, 1]
+        return blind_data
 
-            return blind_data
+    else:
+        df['predictions'] = model.predict_proba(
+            df[settings.SET_FEATURES.features_list])[:, 1]
 
-        else:
+        auc_train = roc_auc_score(
+            df[df['is_train'] == 1]['target'],
+            df[df['is_train'] == 1]['predictions'])
 
-            df['predictions'] = model.predict_proba(
-                df[settings.SET_FEATURES.features_list])[:, 1]
+        auc_test = roc_auc_score(
+            df[df['is_train'] == 0]['target'],
+            df[df['is_train'] == 0]['predictions'])
 
-            auc_train = roc_auc_score(
-                df[df['is_train'] == 1]['target'],
-                df[df['is_train'] == 1]['predictions'])
+        print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
-            auc_test = roc_auc_score(
-                df[df['is_train'] == 0]['target'],
-                df[df['is_train'] == 0]['predictions'])
+        return df
 
-            print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
-
-            return df
-
-    except (ValueError, FileNotFoundError) as e:
-        print(f"Error: {e}")
