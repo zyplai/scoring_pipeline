@@ -100,11 +100,12 @@ class SFA:
             )
         try:
             output.to_csv(f'{sfa_dir}/sfa_result.csv')
+            save_toml(sfa_dir)
 
         except OSError:
             os.makedirs(sfa_dir)
             output.to_csv(f'{sfa_dir}/sfa_result.csv')
-
+            save_toml(sfa_dir)
         return output
 
     def cramers_v(self, x, y):
