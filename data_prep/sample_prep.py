@@ -27,4 +27,7 @@ def prepare_main_sample(df: pd.DataFrame, test_size: int = 0.3, random_state: in
     # concat to one df
     df = pd.concat([train, test], ignore_index=True)
 
+    cat_columns = list(df.select_dtypes(object))
+    df[cat_columns] = df[cat_columns].fillna('N/A')
+
     return df
