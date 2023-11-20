@@ -2,7 +2,7 @@
 mapper = {}
 
 [TARGET_MEAN_ENCODE]
-target_encode=true
+target_encode=false
 
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/train_data.xlsx'
@@ -13,6 +13,7 @@ test_size = 0.15
 blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
+partner_name = 'FINCA Guatemala'
 partners_country = 'Guatemala'
 num_of_lags = 3
 window = 7

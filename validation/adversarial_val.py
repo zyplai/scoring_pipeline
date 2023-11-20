@@ -59,17 +59,11 @@ def perform_adv_val(train_set: pd.DataFrame, inference: bool = False) -> float:
         blind_set[target] = 1
         
         data_all = pd.concat([train_set, blind_set], ignore_index = True)
-        data_all[settings.SET_FEATURES.cat_feature_list] = data_all[settings.SET_FEATURES.cat_feature_list].fillna('N/A')
             
         blind_auc = train_adv_val_model(data_all, target)
-        
         return blind_auc
     
     else:
         target = 'is_train'
-        # note: missing values are filled here, which may affect further process
-        train_set[settings.SET_FEATURES.cat_feature_list] = train_set[settings.SET_FEATURES.cat_feature_list].fillna('N/A')
-        
         train_test_auc = train_adv_val_model(train_set, target)
-
         return train_test_auc

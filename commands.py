@@ -1,4 +1,5 @@
 import logging
+import pprint
 import warnings
 
 import fire
@@ -11,6 +12,8 @@ from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
+from validation.ks_test import compare_datasets
+from validation.model_report import create_report_fpdf
 from validation.adversarial_val import perform_adv_val
 from utils.basic_utils import read_file
 
@@ -61,10 +64,17 @@ def run_scoring_pipe():
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 
-    clean_sample = features_processing(clean_sample, target_encoder=True)
+    clean_sample = features_processing(clean_sample, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode)
 
     trained_model = fit(clean_sample)
     predictions = predict(clean_sample, trained_model)
+    
+    adv_val_result = perform_adv_val(clean_sample)
+    
+    ks_result = compare_datasets(clean_sample[clean_sample['is_train'] == 1], 
+                                 clean_sample[clean_sample['is_train'] == 0])
+            
+    create_report_fpdf(predictions, trained_model, adv_val_result, ks_result)    
 
 
 def run_sfa():
