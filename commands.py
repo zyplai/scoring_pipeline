@@ -72,6 +72,7 @@ def run_sfa():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
+    clean_sample = features_processing(clean_sample, target_encoder=True)
     sfa = SFA(clean_sample)
     sfa.get_sfa_results()
 
