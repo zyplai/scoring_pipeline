@@ -7,9 +7,9 @@ import pandas as pd
 from configs.config import settings
 from data_prep.normalize_raw_data import define_target, map_col_names
 from data_prep.sample_prep import prepare_main_sample
+from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
-from features.cat_features import TargetMeanEncoder
 from models.train import fit, predict
 from utils.basic_utils import read_file
 
@@ -31,7 +31,7 @@ def features_processing(df: pd.DataFrame, target_encoder: bool):
 
     if target_encoder:
         mean_encoder = TargetMeanEncoder()
-        mean_encoder.fit(df[df['is_train' == 1]])
+        mean_encoder.fit(df[df['is_train'] == 1])
         df = mean_encoder.transform(df)
 
     return df
