@@ -44,10 +44,12 @@ class SFA:
         :feature_name: feature to fit on
         """
         # get train set only
-        X_train = self.df.loc[self.df['is_train'] == 1,
-                              [feature_name]].reset_index(drop=True)
-        y_train = self.df.loc[self.df['is_train'] == 1,
-                              ['target']].reset_index(drop=True)
+        X_train = self.df.loc[self.df['is_train'] == 1, [feature_name]].reset_index(
+            drop=True
+        )
+        y_train = self.df.loc[self.df['is_train'] == 1, ['target']].reset_index(
+            drop=True
+        )
         y_train = y_train.astype('int')
 
         # init model and fit for each factor
@@ -58,16 +60,13 @@ class SFA:
         else:
             cat_feature = []
 
-        model = cb_model.fit(X_train,
-                             y_train,
-                             cat_features=cat_feature)
+        model = cb_model.fit(X_train, y_train, cat_features=cat_feature)
         # evaluate performance
         y_train_preds = model.predict_proba(X_train)[:, 1]
         factor_train_gini = gini(y_train, y_train_preds)
 
         # return results
-        results = {'factor': [feature_name],
-                   'gini': [round(factor_train_gini, 2)]}
+        results = {'factor': [feature_name], 'gini': [round(factor_train_gini, 2)]}
 
         return results
 
@@ -83,21 +82,17 @@ class SFA:
             sfa_result = self.__run_sfa(f)
 
             # concat result to main df
-            output = pd.concat([output, pd.DataFrame(sfa_result)],
-                               ignore_index=True)
+            output = pd.concat([output, pd.DataFrame(sfa_result)], ignore_index=True)
 
         # sort values for convenience
-        output = output.sort_values('gini',
-                                    ascending=False).reset_index(drop=True)
+        output = output.sort_values('gini', ascending=False).reset_index(drop=True)
 
         current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
         # create the directory for the current run
         sfa_dir = os.path.join(
-                    os.getcwd(),
-                    settings.SET_FEATURES.sfa_dir,
-                    f'sfa_result_{current_datetime}'
-            )
+            os.getcwd(), settings.SET_FEATURES.sfa_dir, f'sfa_result_{current_datetime}'
+        )
         try:
             output.to_csv(f'{sfa_dir}/sfa_result.csv')
             save_toml(sfa_dir)

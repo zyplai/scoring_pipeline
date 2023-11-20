@@ -113,7 +113,6 @@ class TargetMeanEncoder:
 
     def fit(self, train: pd.DataFrame) -> None:
         for col in self.cat_features:
-            train = train[self.feature_list]
             stats = train['target'].groupby(train[col]).agg(['mean'])
             self.mapping[col] = stats
 
