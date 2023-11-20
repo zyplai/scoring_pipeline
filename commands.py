@@ -7,6 +7,7 @@ import pandas as pd
 from configs.config import settings
 from data_prep.normalize_raw_data import define_target, map_col_names
 from data_prep.sample_prep import prepare_main_sample
+from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
@@ -29,6 +30,16 @@ def preprocess_raw_sample():
     return train_sample
 
 
+def features_processing(df: pd.DataFrame, target_encoder: bool):
+
+    if target_encoder:
+        mean_encoder = TargetMeanEncoder()
+        mean_encoder.fit(df[df['is_train'] == 1])
+        df = mean_encoder.transform(df)
+
+    return df
+
+
 def enrich_with_features(df: pd.DataFrame):
     daily, monthly, quarterly = prepare_macro_features(
         country=settings.FEATURES_PARAMS.country,
@@ -49,6 +60,9 @@ def run_scoring_pipe():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
+
+    clean_sample = features_processing(clean_sample, target_encoder=True)
+
     trained_model = fit(clean_sample)
     predictions = predict(clean_sample, trained_model)
 

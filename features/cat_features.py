@@ -3,6 +3,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from configs.config import settings
+
 
 class WoeEncoder:
     def __init__(
@@ -101,3 +103,25 @@ class CatEncoder:
         self.df[f'{cat_feature_name}_encoded'] = self.df[cat_feature_name].map(
             cat_feature_encoder
         )
+
+
+class TargetMeanEncoder:
+    def __init__(self):
+        self.feature_list = settings.SET_FEATURES.features_list
+        self.cat_features = settings.SET_FEATURES.cat_feature_list
+        self.mapping = {}
+
+    def fit(self, train: pd.DataFrame) -> None:
+        for col in self.cat_features:
+            train = train[self.feature_list]
+            stats = train['target'].groupby(train[col]).agg(['mean'])
+            self.mapping[col] = stats
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        for col in self.cat_features:
+
+            stats = self.mapping[col]
+
+            df[col] = df[col].map(stats['mean'])
+
+        return df
