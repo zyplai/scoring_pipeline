@@ -1,7 +1,6 @@
 import logging
 import pprint
 import warnings
-
 import fire
 import pandas as pd
 
@@ -12,9 +11,7 @@ from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
-from validation.ks_test import compare_datasets
 from validation.model_report import create_report_fpdf
-from validation.adversarial_val import perform_adv_val
 from utils.basic_utils import read_file
 
 warnings.filterwarnings("ignore")
@@ -27,7 +24,7 @@ def preprocess_raw_sample():
     define_target(
         df=train_sample, 
         cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days,
-        number_of_days=30
+        number_of_days=settings.TRAIN_SAMPLE_PROPS.target_days
     )
 
     return train_sample
@@ -68,13 +65,8 @@ def run_scoring_pipe():
 
     trained_model = fit(clean_sample)
     predictions = predict(clean_sample, trained_model)
-    
-    adv_val_result = perform_adv_val(clean_sample)
-    
-    ks_result = compare_datasets(clean_sample[clean_sample['is_train'] == 1], 
-                                 clean_sample[clean_sample['is_train'] == 0])
-            
-    create_report_fpdf(predictions, trained_model, adv_val_result, ks_result)    
+                
+    create_report_fpdf(predictions, trained_model)    
 
 
 def run_sfa():
