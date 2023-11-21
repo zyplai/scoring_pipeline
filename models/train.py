@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime
 
 import catboost as cb
 import pandas as pd
@@ -13,7 +12,7 @@ from utils.basic_utils import read_file, save_pickle, save_toml
 from .model_validator import create_validator
 
 
-def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
+def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
     """
     This function splits the input dataframe into train and test, initializes
     a CatBoostClassifier and fits it on the train data while evaluating on the test data then save the model artifact.
@@ -24,9 +23,6 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     Returns:
         object: The trained CatBoost modeol
     """
-    df[settings.SET_FEATURES.cat_feature_list] = df[
-        settings.SET_FEATURES.cat_feature_list
-    ].fillna('N/A')
 
     # split into train and test
     X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
@@ -53,11 +49,11 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
         )
         logging.info('------- Model trained...')
     # create a timestamp for the current run
-    current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
 
     # create the directory for the current run
     run_dir = os.path.join(
-        os.getcwd(), settings.SET_FEATURES.output_dir, f'run_{current_datetime}'
+        os.getcwd(), settings.SET_FEATURES.output_dir, f'run_{run_time}'
     )
     model_artifact_dir = f'{run_dir}/model_artifact'
     try:
