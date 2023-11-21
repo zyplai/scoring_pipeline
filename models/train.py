@@ -24,9 +24,6 @@ def fit(df: pd.DataFrame) -> cb.CatBoostClassifier:
     Returns:
         object: The trained CatBoost modeol
     """
-    df[settings.SET_FEATURES.cat_feature_list] = df[
-        settings.SET_FEATURES.cat_feature_list
-    ].fillna('N/A')
 
     # split into train and test
     X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
