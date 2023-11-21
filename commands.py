@@ -1,6 +1,8 @@
 import logging
 import pprint
 import warnings
+from datetime import datetime
+
 import fire
 import pandas as pd
 
@@ -61,9 +63,11 @@ def run_scoring_pipe():
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 
-    clean_sample = features_processing(clean_sample, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode)
+    clean_sample = features_processing(clean_sample, target_encoder=True)
 
-    trained_model = fit(clean_sample)
+    run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    trained_model = fit(clean_sample, run_time)
     predictions = predict(clean_sample, trained_model)
                 
     create_report_fpdf(predictions, trained_model)    
