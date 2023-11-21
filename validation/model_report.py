@@ -11,13 +11,12 @@ from validation.ks_test import compare_datasets
 from validation.adversarial_val import perform_adv_val 
 
 
-def create_report_fpdf(data, model) -> None:    
+def create_report_fpdf(data, model, runtime) -> None:    
     threshold_breakdown, data_breakdown, model_performance = get_performance_metric(data)
     
     doc_font = 'Arial'
     section_split_space = 10
-    current_time = datetime.now()
-    formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+    runtime = datetime.strptime(runtime, '%Y-%m-%d_%H-%M-%S')
     
     pdf = FPDF()
     pdf.add_page()
@@ -30,13 +29,8 @@ def create_report_fpdf(data, model) -> None:
     # Metadata:
     
     pdf.set_font(doc_font, style='B', size=16)
-    pdf.cell(w=0, h=10, txt='Training run #420', border='B', ln=1) # PLACEHOLDER TEXT
+    pdf.cell(w=0, h=10, txt='Training run - ' + str(runtime), border='B', ln=1)
     pdf.ln(h=2)
-    
-    pdf.set_font(doc_font, style='B', size=10)
-    pdf.cell(w=pdf.get_string_width('Date: '), h=5, txt='Date: ', ln=0)
-    pdf.set_font(doc_font, style='', size=10)
-    pdf.cell(w=pdf.get_string_width(formatted_time), h=5, txt=formatted_time, ln=1)
     
     pdf.set_font(doc_font, style='B', size=10)
     pdf.cell(w=pdf.get_string_width('Author: '), h=5, txt='Author: ', ln=0)
@@ -284,12 +278,12 @@ def get_feature_report(data: pd.DataFrame):
             column_info = dict()
             column_info['Feature'] = str(column)[:22]
             column_info['Type'] = data[column].dtype
-            column_info['Missing'] = data[column].isnull().sum() / len(data)
+            column_info['Missing'] = round(data[column].isnull().sum() / len(data), 5)
             
             if is_numeric_dtype(data[column]):
-                column_info['Min'] = data[column].min()
-                column_info['Max'] = data[column].max()
-                column_info['Mode'] = round(data[column].mode()[0], 4)
+                column_info['Min'] = round(data[column].min(), 5)
+                column_info['Max'] = round(data[column].max(), 5)
+                column_info['Mode'] = round(data[column].mode()[0], 5)
             elif is_string_dtype(data[column]):
                 column_info['Min'] = '-'
                 column_info['Max'] = '-'

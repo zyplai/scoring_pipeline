@@ -28,11 +28,19 @@ def train_adv_val_model(data: pd.DataFrame, target: str) -> float:
         random_state=1
     )
 
-    clf.fit(
-        X_train, y_train, 
-        cat_features=settings.SET_FEATURES.cat_feature_list, 
-        verbose=False
-    )
+    if settings.TARGET_MEAN_ENCODE.target_encode:
+        clf.fit(
+            X_train, y_train, 
+            cat_features=[], 
+            verbose=False
+        )
+    else:
+        clf.fit(
+            X_train, y_train, 
+            cat_features=settings.SET_FEATURES.cat_feature_list, 
+            verbose=False
+        )
+            
     
     preds = clf.predict_proba(X_val)[:, 1]
     auc = roc_auc_score(y_val, preds)
