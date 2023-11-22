@@ -1,7 +1,7 @@
 import logging
 import pprint
 import warnings
-from datetime import datetime
+from datetime import date, datetime
 
 import fire
 import pandas as pd
@@ -32,11 +32,12 @@ def preprocess_raw_sample():
     return train_sample
 
 
-def features_processing(df: pd.DataFrame, target_encoder: bool):
-
+def features_processing(
+    df: pd.DataFrame, run_time: datetime, target_encoder: bool
+) -> pd.DataFrame:
     if target_encoder:
         mean_encoder = TargetMeanEncoder()
-        mean_encoder.fit(df[df['is_train'] == 1])
+        mean_encoder.fit(df[df['is_train'] == 1], run_time)
         df = mean_encoder.transform(df)
 
     return df
@@ -63,9 +64,9 @@ def run_scoring_pipe():
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 
-    clean_sample = features_processing(clean_sample, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode)
+    run_time = datetime.now(date).strftime('%Y-%m-%d_%H-%M-%S')
 
-    run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    clean_sample = features_processing(clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode)
 
     trained_model = fit(clean_sample, run_time)
     predictions = predict(clean_sample, trained_model)
@@ -84,7 +85,4 @@ def run_sfa():
 
 
 if __name__ == '__main__':
-    fire.Fire({
-        "run_scoring": run_scoring_pipe,
-        "run_sfa": run_sfa
-    })
+    fire.Fire({"run_scoring": run_scoring_pipe, "run_sfa": run_sfa})

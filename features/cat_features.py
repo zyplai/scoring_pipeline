@@ -1,9 +1,11 @@
+import os
 from typing import List
 
 import numpy as np
 import pandas as pd
 
 from configs.config import settings
+from utils.basic_utils import save_json
 
 
 class WoeEncoder:
@@ -22,7 +24,6 @@ class WoeEncoder:
         woes = []
 
         for feature_name in self.features:
-
             # get count, number of goods and bads
             woe_df = (
                 self.df.groupby(feature_name)
@@ -61,7 +62,6 @@ class WoeEncoder:
         function to transform qualitative factor values to woe inplace
         """
         for k in self.woe_dict:
-
             self.df[k + '_woe'] = self.df[k].map(self.woe_dict[k]).astype(float)
 
         # check for nans
@@ -86,7 +86,6 @@ class CatEncoder:
         self.df = df
 
     def encode_category(self, cat_feature_name: str, numeric_feature_name: str):
-
         mapper_output = (
             self.df.groupby(cat_feature_name)[numeric_feature_name].mean().to_dict()
         )
@@ -96,7 +95,6 @@ class CatEncoder:
         return mapper_output
 
     def fit_transform_encoder(self, cat_feature_name: str, numeric_feature_name: str):
-
         cat_feature_encoder = self.encode_category(
             cat_feature_name, numeric_feature_name
         )
@@ -110,15 +108,24 @@ class TargetMeanEncoder:
         self.feature_list = settings.SET_FEATURES.features_list
         self.cat_features = settings.SET_FEATURES.cat_feature_list
         self.mapping = {}
+        self.stats_dict = {}
 
-    def fit(self, train: pd.DataFrame) -> None:
+    def fit(self, train: pd.DataFrame, run_time) -> None:
         for col in self.cat_features:
             stats = train['target'].groupby(train[col]).agg(['mean'])
             self.mapping[col] = stats
+            self.stats_dict[col] = stats[['mean']].to_dict('dict')['mean']
+
+        run_dir = os.path.join(
+            os.getcwd(), settings.SET_FEATURES.output_dir, f'run_{run_time}'
+        )
+
+        os.makedirs(run_dir, exist_ok=True)
+
+        save_json(self.stats_dict, f'{run_dir}/tme_cat_values.json')
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         for col in self.cat_features:
-
             stats = self.mapping[col]
 
             df[col] = df[col].map(stats['mean'])
