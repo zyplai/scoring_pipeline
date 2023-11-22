@@ -69,7 +69,7 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
         save_pickle(cbm, model_path)
         logging.info('------- Model saved...')
     except OSError:
-        os.makedirs(run_dir)
+        os.makedirs(run_dir, exist_ok=True)
         os.makedirs(model_artifact_dir)
         model_path = f'{model_artifact_dir}/{settings.SET_FEATURES.type_}.pkl'
         create_validator(
