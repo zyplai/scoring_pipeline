@@ -23,3 +23,8 @@ model_params = {'iterations' = 500, 'learning_rate' = 0.2, 'depth' = 4}
 
 [MODEL_PATH]
 baseline_model = 'data/model_artifact/trained_model.pkl'
+
+[THRESHOLD_REPORT]
+min_thres = 5
+max_thres = 20
+stp_thres = 1
