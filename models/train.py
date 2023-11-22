@@ -50,7 +50,6 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
         logging.info('------- Model trained...')
     # create a timestamp for the current run
 
-
     # create the directory for the current run
     run_dir = os.path.join(
         os.getcwd(), settings.SET_FEATURES.output_dir, f'run_{run_time}'

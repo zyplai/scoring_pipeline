@@ -1,7 +1,7 @@
-import os
-import shutil
 import json
+import os
 import pickle
+import shutil
 
 import pandas as pd
 from sklearn.metrics import roc_auc_score
@@ -96,7 +96,7 @@ def save_toml(dir_path):
     If the 'configs' directory contains TOML files like 'myconfig.toml' and 'devconfig.toml',
     and 'dir_path' is set to '/path/to/destination', this function will copy these files to
     '/path/to/destination' as 'myconfig.toml' and 'devconfig.toml', respectively.
-    """ # noqa
+    """  # noqa
 
     parent_dir = os.getcwd()
     config_dir = os.path.join(parent_dir, 'configs')
@@ -104,12 +104,10 @@ def save_toml(dir_path):
 
     for i in os.listdir(config_dir):
         if i.endswith('.toml') and i.startswith(tuple(prefixes)):
-            shutil.copy(os.path.join(config_dir, i),
-                        os.path.join(dir_path, i))
+            shutil.copy(os.path.join(config_dir, i), os.path.join(dir_path, i))
 
 
 def save_txt(dir_path, config_content):
-
     with open(f'{dir_path}/config.txt', 'w') as file:
         file.write(config_content)
 
