@@ -7,12 +7,14 @@ target_encode=true
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/train_data.xlsx'
 cumulative_days = 'Cumulative days of late payments'
+target_days = 30
 test_size = 0.15
 
 [BLIND_SAMPLE_PROPS]
 blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
+partner_name = 'FINCA Guatemala'
 partners_country = 'Guatemala'
 num_of_lags = 3
 window = 7
