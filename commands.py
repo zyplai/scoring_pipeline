@@ -81,9 +81,14 @@ def run_sfa():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
-    clean_sample = features_processing(clean_sample, target_encoder=True)
+
+    run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    clean_sample = features_processing(clean_sample, run_time, target_encoder=True)
+
     sfa = SFA(clean_sample)
-    sfa.get_sfa_results()
+    sfa.get_sfa_results(run_time)
+    sfa.spearman_corr(run_time)
 
 
 if __name__ == '__main__':
