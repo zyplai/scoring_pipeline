@@ -13,8 +13,8 @@ from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
-from validation.model_report import create_report_fpdf
 from utils.basic_utils import read_file
+from validation.model_report import create_report_fpdf
 
 warnings.filterwarnings("ignore")
 
@@ -24,9 +24,9 @@ def preprocess_raw_sample():
     train_sample = read_file(settings.TRAIN_SAMPLE_PROPS.train_sample_path)
     map_col_names(train_sample)
     define_target(
-        df=train_sample, 
+        df=train_sample,
         cumulative_delays=settings.TRAIN_SAMPLE_PROPS.cumulative_days,
-        number_of_days=settings.TRAIN_SAMPLE_PROPS.target_days
+        number_of_days=settings.TRAIN_SAMPLE_PROPS.target_days,
     )
 
     return train_sample
@@ -64,14 +64,16 @@ def run_scoring_pipe():
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 
-    run_time = datetime.now(date).strftime('%Y-%m-%d_%H-%M-%S')
+    run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-    clean_sample = features_processing(clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode)
+    clean_sample = features_processing(
+        clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode
+    )
 
     trained_model = fit(clean_sample, run_time)
     predictions = predict(clean_sample, trained_model)
-              
-    create_report_fpdf(predictions, trained_model, run_time)    
+
+    create_report_fpdf(predictions, trained_model, run_time)
 
 
 def run_sfa():
@@ -79,9 +81,14 @@ def run_sfa():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
-    clean_sample = features_processing(clean_sample, target_encoder=True)
+
+    run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    clean_sample = features_processing(clean_sample, run_time, target_encoder=True)
+
     sfa = SFA(clean_sample)
-    sfa.get_sfa_results()
+    sfa.get_sfa_results(run_time)
+    sfa.spearman_corr(run_time)
 
 
 if __name__ == '__main__':

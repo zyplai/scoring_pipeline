@@ -33,9 +33,6 @@ def compare_datasets(train_data, blind_data, alpha=0.05):
         else:
             similarity = "Likely from different distribution"
 
-        result[column] = {
-            "p_value": p_value,
-            "similarity": similarity
-        }
+        result[column] = {"p_value": p_value, "similarity": similarity}
 
     return result

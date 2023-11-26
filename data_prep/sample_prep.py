@@ -5,7 +5,6 @@ from sklearn.model_selection import train_test_split
 
 
 def prepare_main_sample(df: pd.DataFrame, test_size: int = 0.3, random_state: int = 42):
-
     X, y = df.drop('target', axis=1), df[['target']]
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, shuffle=True, random_state=random_state

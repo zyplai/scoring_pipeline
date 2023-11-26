@@ -8,7 +8,6 @@ from utils.basic_utils import snake_case
 
 
 def get_macro_data(country: str):
-
     getter_instance = DataGetter()
     getter_instance.auth(settings.ZYPL_MACRO.auth_token)
 
@@ -35,7 +34,6 @@ def calc_macro_features(
 def prepare_macro_features(
     country: str, num_of_lags: int = 3, window: int = 7
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-
     macro_data = get_macro_data(settings.FEATURES_PARAMS.partners_country)
 
     # calc features

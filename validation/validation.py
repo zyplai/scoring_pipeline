@@ -59,7 +59,6 @@ warnings.filterwarnings('ignore')
     2. Main
 """
 if __name__ == '__main__':
-
     # prepare data
     df = construct_main_df(
         main_sample_path,

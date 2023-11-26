@@ -3,8 +3,8 @@
 @author: shuhratjon.khalilbekov@ru.ey.com
 """
 import os
-from datetime import datetime
 from itertools import product
+from typing import Dict, Union
 
 import catboost as cb
 import numpy as np
@@ -17,20 +17,18 @@ from utils.basic_utils import gini, save_toml
 
 
 class SFA:
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame) -> None:
         """
+        Initialize the SFA object.
+
         Parameters
         ----------
         df : pd.DataFrame
-            main_sample + feature df merged.
-        feature_list : str
-            list of features to perform SFA.
-        lgb_params : dict
-            params to use for LightGBM.
+            Main sample + feature DataFrame merged.
 
         Returns
         -------
-        df with SFA results
+        None
 
         """
         self.df = df
@@ -38,18 +36,16 @@ class SFA:
         self.params = settings.SFA_PARAMS.model_params
         self.cat_features = settings.SET_FEATURES.cat_feature_list
 
-    def __run_sfa(self, feature_name):
+    def __run_sfa(self, feature_name: str) -> Dict[str, Union[str, float]]:
         """
         method to run Single Factor Analysis (SFA) for a given factor
         :feature_name: feature to fit on
         """
         # get train set only
-        X_train = self.df.loc[self.df['is_train'] == 1, [feature_name]].reset_index(
-            drop=True
-        )
-        y_train = self.df.loc[self.df['is_train'] == 1, ['target']].reset_index(
-            drop=True
-        )
+        X_train = self.df.loc[self.df['is_train'] == 1,
+                              [feature_name]].reset_index(drop=True)
+        y_train = self.df.loc[self.df['is_train'] == 1,
+                              ['target']].reset_index(drop=True)
         y_train = y_train.astype('int')
 
         # init model and fit for each factor
@@ -66,13 +62,20 @@ class SFA:
         factor_train_gini = gini(y_train, y_train_preds)
 
         # return results
-        results = {'factor': [feature_name], 'gini': [round(factor_train_gini, 2)]}
+        results = {'factor': [feature_name],
+                   'gini': [round(factor_train_gini, 2)]}
 
         return results
 
-    def get_sfa_results(self):
+    def get_sfa_results(self, run_time) -> pd.DataFrame:
         """
-        method to run sfa on all data and store results
+        Run SFA on all data and store results.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with SFA results.
+
         """
         # init empty df to store results
         output = pd.DataFrame()
@@ -82,16 +85,17 @@ class SFA:
             sfa_result = self.__run_sfa(f)
 
             # concat result to main df
-            output = pd.concat([output, pd.DataFrame(sfa_result)], ignore_index=True)
+            output = pd.concat([output, pd.DataFrame(sfa_result)],
+                               ignore_index=True)
 
         # sort values for convenience
-        output = output.sort_values('gini', ascending=False).reset_index(drop=True)
-
-        current_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        output = output.sort_values('gini',
+                                    ascending=False).reset_index(drop=True)
 
         # create the directory for the current run
         sfa_dir = os.path.join(
-            os.getcwd(), settings.SET_FEATURES.sfa_dir, f'sfa_result_{current_datetime}'
+            os.getcwd(), settings.SET_FEATURES.sfa_dir,
+            f'sfa_result_{run_time}'
         )
         try:
             output.to_csv(f'{sfa_dir}/sfa_result.csv')
@@ -101,12 +105,13 @@ class SFA:
             os.makedirs(sfa_dir)
             output.to_csv(f'{sfa_dir}/sfa_result.csv')
             save_toml(sfa_dir)
+
         return output
 
-    def cramers_v(self, x, y):
+    def cramers_v(self, x: np.ndarray, y: np.ndarray) -> float:
         """
         metho to run correlation between categorical factos
-        source: https://towardsdatascience.com/the-search-for-categorical-correlation-a1cf7f1888c9
+        source: https://towardsdatascience.com/the-search-for-categorical-correlation-a1cf7f1888c9 # noqa
 
         Parameters
         ----------
@@ -140,20 +145,14 @@ class SFA:
 
         return corr_result
 
-    def get_categories_corr(self):
+    def get_categories_corr(self) -> pd.DataFrame:
         """
-        method to get correaltions between categorical features
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            DESCRIPTION.
-        qual_features_list : list
-            DESCRIPTION.
+        Get correlations between categorical features.
 
         Returns
         -------
-        df - matrix with correlations as values
+        pd.DataFrame
+            DataFrame with correlations as values.
 
         """
         # get combinations of factors
@@ -179,3 +178,45 @@ class SFA:
         ).reset_index()
 
         return output_pivot
+
+    def spearman_corr(self, run_time) -> pd.DataFrame:
+        """
+        Calculate correlation between numeric columns
+        and target using Spearman's method.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with column names and their correlations.
+
+        """
+        # Calculate correlation between numeric columns and target
+        numeric_columns = self.df.select_dtypes(include='number').columns
+        correlations = []
+
+        for col in tqdm(numeric_columns):
+            correlation = self.df[col].corr(self.df['target'],
+                                            method='spearman')
+            correlations.append((col, correlation))
+
+        # Create a dataframe from the correlations list
+        correlations_df = pd.DataFrame(correlations,
+                                       columns=['Column', 'Correlation'])
+        correlations_df = correlations_df.sort_values(
+            'Correlation', ascending=False
+        ).reset_index(drop=True)
+
+        sfa_dir = os.path.join(
+            os.getcwd(), settings.SET_FEATURES.sfa_dir,
+            f'sfa_result_{run_time}'
+        )
+        try:
+            correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
+            save_toml(sfa_dir)
+
+        except OSError:
+            os.makedirs(sfa_dir)
+            correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
+            save_toml(sfa_dir)
+
+        return correlations_df
