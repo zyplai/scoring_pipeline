@@ -1,14 +1,18 @@
+[MLFLOW]
+tracking_uri="http://13.81.254.179:5050"
+experiment_name = "finca_gvatemala"
+
 [SET_FEATURES]
 model_params = {'iterations' = 500, 'random_seed' = 1}
 
 features_list = [
-       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 
-       'Education level', 'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral', 'Loan amount', 
+       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)',
+       'Education level', 'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral', 'Loan amount',
        'Duration at disbursement (months)', 'Interest rate', 'Age', 'Monthly income', 'Quantity of prior loans', 'Quantity of dependents'
 ]
 
 cat_feature_list = [
-       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 'Education level', 
+       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 'Education level',
        'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral'
 ]
 
