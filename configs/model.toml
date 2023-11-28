@@ -1,16 +1,12 @@
 [SET_FEATURES]
-model_params = {'iterations' = 500, 'random_seed' = 1}
+model_params = {'learning_rate' = 0.1, 'depth' = 2, 'n_estimators' = 100, 'bootstrap_type' = 'Bernoulli', 'random_seed' = 10}
 
-features_list = [
-       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 
-       'Education level', 'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral', 'Loan amount', 
-       'Duration at disbursement (months)', 'Interest rate', 'Age', 'Monthly income', 'Quantity of prior loans', 'Quantity of dependents'
-]
+features_list = ['loan_amount', 'duration_at_disbursement_months', 'interest_rate', 'age', 'monthly_income_aed',
+                  'work_experience', 'presence_of_car', 'collateral',
+                  'employment_sphere', 'type_of_product', 'AECB Point In Time Score'
+                  ]
 
-cat_feature_list = [
-       'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 'Education level', 
-       'Employment sphere', 'Presence of housing', 'Co-borrower', 'Collateral'
-]
+cat_feature_list = ['employment_sphere', 'type_of_product']
 
 type_ = 'baseline scoring model'
 output_dir = 'data'

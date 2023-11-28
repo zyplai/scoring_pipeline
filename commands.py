@@ -45,11 +45,11 @@ def features_processing(
 
 def enrich_with_features(df: pd.DataFrame):
     daily, monthly, quarterly = prepare_macro_features(
-        country=settings.FEATURES_PARAMS.country,
+        country=settings.FEATURES_PARAMS.partners_country,
         num_of_lags=settings.FEATURES_PARAMS.num_of_lags,
         window=settings.FEATURES_PARAMS.window,
     )
-
+    
     df.rename(columns={f'{settings.FEATURES_PARAMS.date_col}': 'date'}, inplace=True)
     final_df = pd.merge(df, daily, on='date', how='left')
     final_df = pd.merge(final_df, monthly, on='date', how='left')
@@ -57,11 +57,30 @@ def enrich_with_features(df: pd.DataFrame):
 
     return final_df
 
+def custom_proc(df: pd.DataFrame):
+    df2 = df[(df['status_of_loan'] == 'Active') & (df['target'] == 1) | (df['status_of_loan'] != 'Active')]
+    
+    df2['collateral'] = df2['collateral'].replace({'No': 0, 'Yes': 1}).astype('int32')
+    df2['gender'] = df2['gender'].replace({'Female': 0, 'Male': 1}).astype('int32')
+    
+    df2['AECB Point In Time Score'].replace({
+        'NA value': None,
+        'NH value': None,
+        'NR value': None
+    }, inplace=True)
+    
+    df2['AECB Point In Time Score'] = df2['AECB Point In Time Score'].astype(float)
+    
+    return df2
+    
 
 def run_scoring_pipe():
     sample = preprocess_raw_sample()
+    
+    data = custom_proc(sample)
+    
     clean_sample = prepare_main_sample(
-        df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
+        df=data, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 
     run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -69,6 +88,9 @@ def run_scoring_pipe():
     clean_sample = features_processing(
         clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode
     )
+    print(clean_sample[settings.SET_FEATURES.features_list].head(5))
+    print(clean_sample[settings.SET_FEATURES.features_list].info())
+    print(clean_sample[settings.SET_FEATURES.features_list].isna().sum())
 
     trained_model = fit(clean_sample, run_time)
     predictions = predict(clean_sample, trained_model)
@@ -87,8 +109,9 @@ def run_sfa():
     clean_sample = features_processing(clean_sample, run_time, target_encoder=True)
 
     sfa = SFA(clean_sample)
-    sfa.get_sfa_results(run_time)
-    sfa.spearman_corr(run_time)
+    sfa_results = sfa.get_sfa_results(run_time)
+    sfa_corr = sfa.spearman_corr(run_time)
+    create_sfa_report(sfa_results, sfa_corr, run_time)
 
 
 if __name__ == '__main__':
