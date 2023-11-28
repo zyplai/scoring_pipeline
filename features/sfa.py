@@ -204,7 +204,7 @@ class SFA:
 #             'Correlation', ascending=False
 #         ).reset_index(drop=True)
 
-		correlations_df = data.corr(method='pearson', numeric_only=True)
+	correlations_df = data.corr(method='pearson', numeric_only=True)
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
