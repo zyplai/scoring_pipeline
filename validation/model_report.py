@@ -8,6 +8,7 @@ from pandas.api.types import is_numeric_dtype, is_string_dtype
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score
 
 from configs.config import settings
+from validation.psi import get_all_psi
 from validation.adversarial_val import perform_adv_val
 from validation.ks_test import compare_datasets
 
@@ -198,7 +199,38 @@ def create_report_fpdf(data, model, runtime) -> None:
     pdf.cell(w=90, h=7, txt=str('Adversarial validation'), border=1, ln=1, fill=True)
     pdf.cell(w=45, h=7, txt=str('AUC'), border=1, ln=0)
     pdf.cell(w=45, h=7, txt=str(adv_val_result), border=1, ln=0)
+    
+    #################################################################################
+    # PSI:
 
+    psi_result = get_all_psi(
+        data[data['is_train'] == 1], 
+        data[data['is_train'] == 0], 
+        list(set(settings.SET_FEATURES.features_list) - set(settings.SET_FEATURES.cat_feature_list)), 
+        '')
+    
+    pdf.ln(h=section_split_space)
+    pdf.set_font(doc_font, 'B', 13)
+    pdf.cell(w=0, h=10, txt='PSI', border='T', ln=1)
+
+    for key, feature in psi_result.items():
+        pdf.set_font(doc_font, style='B', size=8)
+
+        # Iterate over COLUMNS and display them
+        for col in feature.columns:
+            pdf.cell(w=31, h=7, txt=str(col), border=1, ln=0, fill=True)
+
+        pdf.ln()
+
+        # Iterate over VALUES and display them
+        pdf.set_font(family=doc_font, style='', size=8)
+        for _, row in feature.iterrows():
+            for col in feature.columns:
+                pdf.cell(w=31, h=7, txt=str(row[col]), border=1, ln=0, fill=False)
+            pdf.ln()
+            
+        pdf.ln(h=2)
+    
     #################################################################################
     # Model feature importance:
 
