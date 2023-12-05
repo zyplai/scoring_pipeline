@@ -179,44 +179,50 @@ class SFA:
 
         return output_pivot
 
-    def pearson_corr(self, run_time) -> pd.DataFrame:
+    def spearman_corr(self, run_time) -> pd.DataFrame:
         """
         Calculate correlation between numeric columns
+        and target using Spearman's method.
 
         Returns
         -------
         pd.DataFrame
             DataFrame with column names and their correlations.
+
         """
-#         # Calculate correlation between numeric columns and target
-#         numeric_columns = self.df.select_dtypes(include='number').columns
-#         correlations = []
+        # Calculate correlation between numeric columns and target
+        # numeric_columns = self.df.select_dtypes(include='number').columns
+        # correlations = []
 
-#         for col in tqdm(numeric_columns):
-#             correlation = self.df[col].corr(self.df['target'],
-#                                             method='spearman')
-#             correlations.append((col, correlation))
+        # for col in tqdm(numeric_columns):
+        #     correlation = self.df[col].corr(self.df['target'],
+        #                                     method='spearman')
+        #     correlations.append((col, correlation))
 
-#         # Create a dataframe from the correlations list
-#         correlations_df = pd.DataFrame(correlations,
-#                                        columns=['Column', 'Correlation'])
-#         correlations_df = correlations_df.sort_values(
-#             'Correlation', ascending=False
-#         ).reset_index(drop=True)
+        # # Create a dataframe from the correlations list
+        # correlations_df = pd.DataFrame(correlations,
+        #                                columns=['Column', 'Correlation'])
+        # correlations_df = correlations_df.sort_values(
+        #     'Correlation', ascending=False
+        # ).reset_index(drop=True)
 
-	correlations_df = data.corr(method='pearson', numeric_only=True)
+        corr = self.df.corr( method='spearman', numeric_only=True )
+
+        cor_fig = sns.heatmap(corr)
+        fig = cor_fig.get_figure()
+        fig.savefig('corr_matrix.jpeg',bbox_inches='tight')
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
             f'sfa_result_{run_time}'
         )
         try:
-            correlations_df.to_csv(f'{sfa_dir}/pearson_corr_result.csv')
+            correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
             save_toml(sfa_dir)
 
         except OSError:
             os.makedirs(sfa_dir)
-            correlations_df.to_csv(f'{sfa_dir}/pearson_corr_result.csv')
+            correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
             save_toml(sfa_dir)
 
         return correlations_df
