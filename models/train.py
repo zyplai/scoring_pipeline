@@ -1,14 +1,16 @@
 import logging
 import os
+from datetime import datetime
 
 import catboost as cb
 import pandas as pd
-
+from sklearn.metrics import roc_auc_score
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import read_file, save_pickle, save_toml
 
 from .model_validator import create_validator
+from .mlops import mlflow_track
 
 
 def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
@@ -87,7 +89,10 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
 
 
 def predict(
-    df: pd.DataFrame, model: cb.CatBoostClassifier, inference: bool = False
+    df: pd.DataFrame,
+    model: cb.CatBoostClassifier,
+    run_time: datetime,
+    inference: bool = False
 ) -> pd.DataFrame:
     """
     Make predictions on the input data using the trained model.
@@ -126,5 +131,17 @@ def predict(
             df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list_tme])[:, 1]
         else:
             df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list])[:, 1]
+
+        auc_train = roc_auc_score(
+            df[df['is_train'] == 1]['target'], df[df['is_train'] == 1]['predictions']
+        )
+
+        auc_test = roc_auc_score(
+            df[df['is_train'] == 0]['target'], df[df['is_train'] == 0]['predictions']
+        )
+
+        mlflow_track(model, df, auc_train, auc_test, run_time)
+
+        print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
         return df

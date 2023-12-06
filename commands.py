@@ -81,8 +81,8 @@ def run_scoring_pipe():
     clean_sample = enrich_with_features(clean_sample, enabled=settings.MACRO.enrichment)
 
     trained_model = fit(clean_sample, run_time)
-    predictions = predict(clean_sample, trained_model)
-    
+    predictions = predict(clean_sample, trained_model, run_time)
+
     create_report_fpdf(predictions, trained_model, run_time)
 
 
