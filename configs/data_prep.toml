@@ -4,6 +4,9 @@ mapper = {}
 [TARGET_MEAN_ENCODE]
 target_encode=true
 
+[MACRO]
+enrichment=false
+
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/train_data.xlsx'
 cumulative_days = 'Cumulative days of late payments'

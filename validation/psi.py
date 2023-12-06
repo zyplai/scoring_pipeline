@@ -27,12 +27,12 @@ def calc_psi(population: pd.DataFrame, sample: pd.DataFrame, feature_name):
 
     # for each df cacl shares by feature name and calc psi
     for k in data.keys():
-        print('calculating shares on {}'.format(k))
+        # print('calculating shares on {}'.format(k))
 
         # get shares
         shares[k] = (
             pd.DataFrame(
-                data[k].groupby(feature_name)[feature_name].count() / len(data[k]) * 100
+                round(data[k].groupby(feature_name)[feature_name].count() / len(data[k]) * 100, 2)
             )
             .rename(columns={feature_name: k})
             .reset_index()
@@ -42,9 +42,7 @@ def calc_psi(population: pd.DataFrame, sample: pd.DataFrame, feature_name):
     psi_df = pd.merge(shares['population'], shares['sample'], on=feature_name)
 
     # psi
-    psi_df['psi'] = (psi_df['population'] - psi_df['sample']) * np.log(
-        psi_df['population'] / psi_df['sample']
-    )
+    psi_df['psi'] = round((psi_df['population'] - psi_df['sample']) * np.log(psi_df['population'] / psi_df['sample']), 2)
 
     return psi_df
 
@@ -74,13 +72,13 @@ def get_all_psi(
 
     # init calculation
     for f in feature_names:
-        print('\t calculation PSI for {}'.format(f))
+        # print('\t calculation PSI for {}'.format(f))
 
         # calc PSI
         tmp = calc_psi(population, sample, f)
 
         # plot groupped bars and save
-        tmp.set_index(f).drop('psi', axis=1).plot.bar(color=['#0069D1', '#000080'])
+        # tmp.set_index(f).drop('psi', axis=1).plot.bar(color=['#0069D1', '#000080'])
 
         # save result
         output_dict[f] = tmp.copy()

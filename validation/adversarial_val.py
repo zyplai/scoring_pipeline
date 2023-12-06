@@ -19,18 +19,24 @@ def train_adv_val_model(data: pd.DataFrame, target: str) -> float:
         float: AUC of the adversarial validation model
     """
 
-    X = data[settings.SET_FEATURES.features_list].copy()
-    y = data[target].copy()
-
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.15, random_state=0
-    )
-
     clf = CatBoostClassifier(iterations=1, random_state=1)
 
     if settings.TARGET_MEAN_ENCODE.target_encode:
+        X = data[settings.SET_FEATURES.features_list_tme].copy()
+        y = data[target].copy()
+
+        X_train, X_val, y_train, y_val = train_test_split(
+            X, y, test_size=0.15, random_state=0
+        )
+
         clf.fit(X_train, y_train, cat_features=[], verbose=False)
     else:
+        X = data[settings.SET_FEATURES.features_list].copy()
+        y = data[target].copy()
+
+        X_train, X_val, y_train, y_val = train_test_split(
+            X, y, test_size=0.15, random_state=0
+        )
         clf.fit(
             X_train,
             y_train,

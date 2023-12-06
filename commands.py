@@ -15,6 +15,8 @@ from features.sfa import SFA
 from models.train import fit, predict
 from utils.basic_utils import read_file
 from validation.model_report import create_report_fpdf
+from validation.ks_test import compare_datasets
+
 
 warnings.filterwarnings("ignore")
 
@@ -39,23 +41,29 @@ def features_processing(
         mean_encoder = TargetMeanEncoder()
         mean_encoder.fit(df[df['is_train'] == 1], run_time)
         df = mean_encoder.transform(df)
+        
+        num_cols = [col for col in settings.SET_FEATURES.features_list if col not in settings.SET_FEATURES.cat_feature_list] # get numeric columns
+        tme_cols = [cat_col + '_tme' for cat_col in settings.SET_FEATURES.cat_feature_list] # create list of tme columns
+        settings.SET_FEATURES.features_list_tme = num_cols + tme_cols # todo: 
 
     return df
 
 
-def enrich_with_features(df: pd.DataFrame):
-    daily, monthly, quarterly = prepare_macro_features(
-        country=settings.FEATURES_PARAMS.country,
-        num_of_lags=settings.FEATURES_PARAMS.num_of_lags,
-        window=settings.FEATURES_PARAMS.window,
-    )
+def enrich_with_features(df: pd.DataFrame, enabled):
+    if enabled:
+        daily, monthly, quarterly = prepare_macro_features(
+            country=settings.FEATURES_PARAMS.country,
+            num_of_lags=settings.FEATURES_PARAMS.num_of_lags,
+            window=settings.FEATURES_PARAMS.window,
+        )
 
-    df.rename(columns={f'{settings.FEATURES_PARAMS.date_col}': 'date'}, inplace=True)
-    final_df = pd.merge(df, daily, on='date', how='left')
-    final_df = pd.merge(final_df, monthly, on='date', how='left')
-    final_df = pd.merge(final_df, quarterly, on='date', how='left')
-
-    return final_df
+        df.rename(columns={f'{settings.FEATURES_PARAMS.date_col}': 'date'}, inplace=True)
+        final_df = pd.merge(df, daily, on='date', how='left')
+        final_df = pd.merge(final_df, monthly, on='date', how='left')
+        final_df = pd.merge(final_df, quarterly, on='date', how='left')
+        return final_df
+    else:
+        return df
 
 
 def run_scoring_pipe():
@@ -63,16 +71,18 @@ def run_scoring_pipe():
     clean_sample = prepare_main_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
-
+        
     run_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
     clean_sample = features_processing(
         clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode
     )
+    
+    clean_sample = enrich_with_features(clean_sample, enabled=settings.MACRO.enrichment)
 
     trained_model = fit(clean_sample, run_time)
     predictions = predict(clean_sample, trained_model)
-
+    
     create_report_fpdf(predictions, trained_model, run_time)
 
 
@@ -93,3 +103,7 @@ def run_sfa():
 
 if __name__ == '__main__':
     fire.Fire({"run_scoring": run_scoring_pipe, "run_sfa": run_sfa})
+
+
+# sfa, report versions
+# folder naming

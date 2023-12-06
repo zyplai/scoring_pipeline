@@ -1,5 +1,8 @@
+[METADATA]
+author_name = 'Elon Musk'
+
 [SET_FEATURES]
-model_params = {'iterations' = 500, 'random_seed' = 1}
+model_params = {'iterations' = 10, 'random_seed' = 1}
 
 features_list = [
        'Type of product', 'Branch', 'Location', 'Gender', 'Family status', 'Type of client (old / new)', 
