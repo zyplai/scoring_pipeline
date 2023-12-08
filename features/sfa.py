@@ -206,11 +206,14 @@ class SFA:
         #     'Correlation', ascending=False
         # ).reset_index(drop=True)
 
-        corr = self.df.corr( method='spearman', numeric_only=True )
+        correlations_df = self.df[settings.SET_FEATURES.features_list+[settings.TRAIN_SAMPLE_PROPS.cumulative_days ]].corr( method='spearman', numeric_only=True )
 
-        cor_fig = sns.heatmap(corr)
+        plt.figure(figsize=(18, 10))
+        cor_fig=sns.heatmap(correlations_df,cmap='coolwarm',annot = True)
+        plt.xticks(rotation=45,ha='right')
+
         fig = cor_fig.get_figure()
-        fig.savefig('corr_matrix.jpeg',bbox_inches='tight')
+        fig.savefig(f'{sfa_dir}/corr_matrix.jpeg',bbox_inches='tight')
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
