@@ -191,20 +191,29 @@ class SFA:
 
         """
         # Calculate correlation between numeric columns and target
-        numeric_columns = self.df.select_dtypes(include='number').columns
-        correlations = []
+        # numeric_columns = self.df.select_dtypes(include='number').columns
+        # correlations = []
 
-        for col in tqdm(numeric_columns):
-            correlation = self.df[col].corr(self.df['target'],
-                                            method='spearman')
-            correlations.append((col, correlation))
+        # for col in tqdm(numeric_columns):
+        #     correlation = self.df[col].corr(self.df['target'],
+        #                                     method='spearman')
+        #     correlations.append((col, correlation))
 
-        # Create a dataframe from the correlations list
-        correlations_df = pd.DataFrame(correlations,
-                                       columns=['Column', 'Correlation'])
-        correlations_df = correlations_df.sort_values(
-            'Correlation', ascending=False
-        ).reset_index(drop=True)
+        # # Create a dataframe from the correlations list
+        # correlations_df = pd.DataFrame(correlations,
+        #                                columns=['Column', 'Correlation'])
+        # correlations_df = correlations_df.sort_values(
+        #     'Correlation', ascending=False
+        # ).reset_index(drop=True)
+
+        correlations_df = self.df[settings.SET_FEATURES.features_list+[settings.TRAIN_SAMPLE_PROPS.cumulative_days ]].corr( method='spearman', numeric_only=True )
+
+        plt.figure(figsize=(18, 10))
+        cor_fig=sns.heatmap(correlations_df,cmap='coolwarm',annot = True)
+        plt.xticks(rotation=45,ha='right')
+
+        fig = cor_fig.get_figure()
+        fig.savefig(f'{sfa_dir}/corr_matrix.jpeg',bbox_inches='tight')
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
