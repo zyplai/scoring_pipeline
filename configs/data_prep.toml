@@ -2,10 +2,10 @@
 mapper = {}
 
 [TARGET_MEAN_ENCODE]
-target_encode=true
+target_encode=false
 
 [MACRO]
-enrichment=false
+enrichment=true
 
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/train_data.xlsx'
@@ -18,7 +18,7 @@ blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
 partner_name = 'FINCA Guatemala'
-partners_country = 'Guatemala'
+partners_country = 'UAE'
 num_of_lags = 3
 window = 7
 date_col = 'Date of disbursement'

@@ -13,6 +13,7 @@ from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
 from models.train import fit, predict
+from validation.sfa_report import create_sfa_report
 from utils.basic_utils import read_file
 from validation.model_report import create_report_fpdf
 from validation.ks_test import compare_datasets
@@ -52,7 +53,7 @@ def features_processing(
 def enrich_with_features(df: pd.DataFrame, enabled):
     if enabled:
         daily, monthly, quarterly = prepare_macro_features(
-            country=settings.FEATURES_PARAMS.country,
+            country=settings.FEATURES_PARAMS.partners_country,
             num_of_lags=settings.FEATURES_PARAMS.num_of_lags,
             window=settings.FEATURES_PARAMS.window,
         )
@@ -97,8 +98,9 @@ def run_sfa():
     clean_sample = features_processing(clean_sample, run_time, target_encoder=True)
 
     sfa = SFA(clean_sample)
-    sfa.get_sfa_results(run_time)
-    sfa.spearman_corr(run_time)
+    sfa_res = sfa.get_sfa_results(run_time)
+    corr_path = sfa.spearman_corr(run_time)
+    create_sfa_report(sfa_res, corr_path, run_time)
 
 
 if __name__ == '__main__':
