@@ -88,6 +88,9 @@ def run_scoring_pipe():
     clean_sample = features_processing(
         clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode
     )
+
+    # clean_sample = enrich_with_features(clean_sample)
+
     print(clean_sample[settings.SET_FEATURES.features_list].head(5))
     print(clean_sample[settings.SET_FEATURES.features_list].info())
     print(clean_sample[settings.SET_FEATURES.features_list].isna().sum())
@@ -108,10 +111,12 @@ def run_sfa():
 
     clean_sample = features_processing(clean_sample, run_time, target_encoder=True)
 
+    print(clean_sample.info())
+
     sfa = SFA(clean_sample)
     sfa_results = sfa.get_sfa_results(run_time)
     sfa_corr = sfa.spearman_corr(run_time)
-    create_sfa_report(sfa_results, sfa_corr, run_time)
+    # create_sfa_report(sfa_results, sfa_corr, run_time)
 
 
 if __name__ == '__main__':

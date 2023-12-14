@@ -2,7 +2,7 @@
 mapper = {}
 
 [TARGET_MEAN_ENCODE]
-target_encode=false 
+target_encode=true
 
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/loan_data_w_aecb.xlsx'

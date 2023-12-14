@@ -1,18 +1,46 @@
 [SET_FEATURES]
-model_params = {'learning_rate' = 0.1, 'depth' = 2, 'n_estimators' = 100, 'bootstrap_type' = 'Bernoulli', 'random_seed' = 10}
+model_params = { 'learning_rate' = 0.1, 'depth' = 2,'n_estimators' = 100,'bootstrap_type' = 'Bernoulli','random_seed' = 10}
 
-features_list = ['loan_amount', 'duration_at_disbursement_months', 'interest_rate', 'age', 'monthly_income_aed',
-                  'work_experience', 'presence_of_car', 'collateral',
-                  'employment_sphere', 'type_of_product', 'AECB Point In Time Score'
-                  ]
+features_list = [
+    'loan_amount',
+    'duration_at_disbursement_months',
+    'interest_rate',
+    'quantity_of_prior_loans_at_the_time_of_disbursement_at_cbi',
+    'age',
+    'monthly_income_aed',
+    'quantity_of_prior_loans_at_cbi',
+    'work_experience',
+    'presence_of_car',
+    'presence_of_housing',
+    'dsr',
+    'type_of_product',
+    'location',
+    'emirates',
+    'gender',
+    'family_status',
+    'employment_sphere',
+    'employment_level',
+    'coborrower',
+    'collateral']
 
-cat_feature_list = ['employment_sphere', 'type_of_product']
+cat_feature_list = [
+	'type_of_product',
+	'location','emirates','gender',
+	'family_status',
+   	'employment_sphere',
+   	'employment_level',
+   	'coborrower',
+   	'collateral']
 
 type_ = 'baseline scoring model'
 output_dir = 'data'
 
 model_path = 'data/model_artifact'
 sfa_dir = 'data/sfa_results'
+
+[TUNING]
+use_tuning = true
+tuning_params = { 'learning_rate' = [0.05,0.1], 'depth' = [1,5],'n_estimators' = [50,100],'bootstrap_type' = ['Bernoulli'],'random_seed' = 10,iterations=[1,2]}
 
 [SFA_PARAMS]
 model_params = {'iterations' = 500, 'learning_rate' = 0.2, 'depth' = 4}
