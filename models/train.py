@@ -5,7 +5,6 @@ from datetime import datetime
 import catboost as cb
 import pandas as pd
 from sklearn.metrics import roc_auc_score
-
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import read_file, save_pickle, save_toml
@@ -25,24 +24,27 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
     Returns:
         object: The trained CatBoost modeol
     """
-
-    # split into train and test
-    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[
-        settings.SET_FEATURES.features_list
-    ]
-    y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[
-        settings.SET_FEATURES.features_list
-    ]
-    y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-
     # init model and fit
     logging.info('------- Fitting the model...')
     cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params, verbose=False)
     if settings.TARGET_MEAN_ENCODE.target_encode:
+        # split into train and test
+        X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list_tme]
+        y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
+        
+        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list_tme]
+        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
+        
         cbm.fit(X_train, y_train, eval_set=(X_test, y_test), cat_features=[])
         logging.info('------- Model trained...')
     else:
+        # split into train and test
+        X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list]
+        y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
+        
+        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list]
+        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
+        
         cbm.fit(
             X_train,
             y_train,
@@ -50,7 +52,6 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
             cat_features=settings.SET_FEATURES.cat_feature_list,
         )
         logging.info('------- Model trained...')
-    # create a timestamp for the current run
 
     # create the directory for the current run
     run_dir = os.path.join(
@@ -126,9 +127,10 @@ def predict(
         return blind_data
 
     else:
-        df['predictions'] = model.predict_proba(
-            df[settings.SET_FEATURES.features_list]
-        )[:, 1]
+        if settings.TARGET_MEAN_ENCODE.target_encode:
+            df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list_tme])[:, 1]
+        else:
+            df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list])[:, 1]
 
         auc_train = roc_auc_score(
             df[df['is_train'] == 1]['target'], df[df['is_train'] == 1]['predictions']

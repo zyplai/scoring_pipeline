@@ -2,6 +2,7 @@ import logging
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from configs.config import settings
 
 
 def prepare_main_sample(df: pd.DataFrame, test_size: int = 0.3, random_state: int = 42):
@@ -26,7 +27,7 @@ def prepare_main_sample(df: pd.DataFrame, test_size: int = 0.3, random_state: in
     # concat to one df
     df = pd.concat([train, test], ignore_index=True)
 
-    cat_columns = list(df.select_dtypes(object))
-    df[cat_columns] = df[cat_columns].fillna('N/A')
+    cat_columns = settings.SET_FEATURES.cat_feature_list
+    df[cat_columns] = df[cat_columns].fillna('N/A') 
 
     return df
