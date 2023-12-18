@@ -51,11 +51,21 @@ def enrich_with_features(df: pd.DataFrame):
     )
     
     df.rename(columns={f'{settings.FEATURES_PARAMS.date_col}': 'date'}, inplace=True)
+
     final_df = pd.merge(df, daily, on='date', how='left')
-    final_df = pd.merge(final_df, monthly, on='date', how='left')
-    final_df = pd.merge(final_df, quarterly, on='date', how='left')
+
+    final_df = pd.merge(final_df, monthly.drop('date',axis=1),
+        left_on=[final_df['date'].dt.year, final_df['date'].dt.month],
+        right_on=[monthly['date'].dt.year, monthly['date'].dt.month],
+        how='left').drop(columns=['key_0','key_1'])
+
+    final_df = pd.merge(final_df, quarterly.drop('date',axis=1),
+        left_on=[final_df['date'].dt.year, final_df['date'].dt.month],
+        right_on=[quarterly['date'].dt.year, quarterly['date'].dt.month],
+        how='left').drop(columns=['key_0','key_1'])
 
     return final_df
+
 
 def custom_proc(df: pd.DataFrame):
     df2 = df[(df['status_of_loan'] == 'Active') & (df['target'] == 1) | (df['status_of_loan'] != 'Active')]
@@ -74,9 +84,11 @@ def custom_proc(df: pd.DataFrame):
     return df2
     
 
+
 def run_scoring_pipe():
+
     sample = preprocess_raw_sample()
-    
+
     data = custom_proc(sample)
     
     clean_sample = prepare_main_sample(
@@ -89,7 +101,7 @@ def run_scoring_pipe():
         clean_sample, run_time, target_encoder=settings.TARGET_MEAN_ENCODE.target_encode
     )
 
-    # clean_sample = enrich_with_features(clean_sample)
+    clean_sample = enrich_with_features(clean_sample)
 
     print(clean_sample[settings.SET_FEATURES.features_list].head(5))
     print(clean_sample[settings.SET_FEATURES.features_list].info())
@@ -117,6 +129,7 @@ def run_sfa():
     sfa_results = sfa.get_sfa_results(run_time)
     sfa_corr = sfa.spearman_corr(run_time)
     # create_sfa_report(sfa_results, sfa_corr, run_time)
+
 
 
 if __name__ == '__main__':

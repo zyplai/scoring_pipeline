@@ -27,8 +27,8 @@ def objective( trial, X, y, X_train, y_train ):
         'depth': trial.suggest_int('depth', 
             settings.TUNING.tuning_params['depth'][0], settings.TUNING.tuning_params['depth'][1]),
 
-        'iterations': trial.suggest_int('iterations', 
-            settings.TUNING.tuning_params['iterations'][0], settings.TUNING.tuning_params['iterations'][1]),
+        'n_estimators': trial.suggest_int('n_estimators', 
+            settings.TUNING.tuning_params['n_estimators'][0], settings.TUNING.tuning_params['n_estimators'][1]),
 
         'bootstrap_type': trial.suggest_categorical('bootstrap_type', 
             settings.TUNING.tuning_params['bootstrap_type'] )

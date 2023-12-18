@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from configs.config import settings
 from utils.basic_utils import gini, save_toml
@@ -51,10 +53,10 @@ class SFA:
         # init model and fit for each factor
         cb_model = cb.CatBoostClassifier(**self.params, verbose=False)
 
-        if self.df[feature_name].dtype == object:
-            cat_feature = [feature_name]
-        else:
-            cat_feature = []
+        # if self.df[feature_name].dtype == object:
+        #     cat_feature = [feature_name]
+        # else:
+        cat_feature = []
 
         model = cb_model.fit(X_train, y_train, cat_features=cat_feature)
         # evaluate performance
@@ -191,25 +193,36 @@ class SFA:
 
         """
         # Calculate correlation between numeric columns and target
-        numeric_columns = self.df.select_dtypes(include='number').columns
-        correlations = []
+        # numeric_columns = self.df.select_dtypes(include='number').columns
+        # correlations = []
 
-        for col in tqdm(numeric_columns):
-            correlation = self.df[col].corr(self.df['target'],
-                                            method='spearman')
-            correlations.append((col, correlation))
+        # for col in tqdm(numeric_columns):
+        #     correlation = self.df[col].corr(self.df['target'],
+        #                                     method='spearman')
+        #     correlations.append((col, correlation))
 
-        # Create a dataframe from the correlations list
-        correlations_df = pd.DataFrame(correlations,
-                                       columns=['Column', 'Correlation'])
-        correlations_df = correlations_df.sort_values(
-            'Correlation', ascending=False
-        ).reset_index(drop=True)
+        # # Create a dataframe from the correlations list
+        # correlations_df = pd.DataFrame(correlations,
+        #                                columns=['Column', 'Correlation'])
+        # correlations_df = correlations_df.sort_values(
+        #     'Correlation', ascending=False
+        # ).reset_index(drop=True)
+
+        correlations_df = self.df[settings.SET_FEATURES.features_list+[settings.TRAIN_SAMPLE_PROPS.cumulative_days ]].corr( method='spearman', numeric_only=True )
+
+        plt.figure(figsize=(18, 10))
+        cor_fig=sns.heatmap(correlations_df,cmap='coolwarm',annot = True)
+        plt.xticks(rotation=45,ha='right')
+
+        fig = cor_fig.get_figure()
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
             f'sfa_result_{run_time}'
         )
+        
+        fig.savefig(f'{sfa_dir}/corr_matrix.jpeg',bbox_inches='tight')
+
         try:
             correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
             save_toml(sfa_dir)
