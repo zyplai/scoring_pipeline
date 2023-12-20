@@ -39,6 +39,13 @@ def features_processing(
         mean_encoder = TargetMeanEncoder()
         mean_encoder.fit(df[df['is_train'] == 1], run_time)
         df = mean_encoder.transform(df)
+<<<<<<< Updated upstream
+=======
+        
+        num_cols = [col for col in settings.SET_FEATURES.features_list if col not in settings.SET_FEATURES.cat_feature_list] # get numeric columns
+        tme_cols = [cat_col + '_tme' for cat_col in settings.SET_FEATURES.cat_feature_list] # create list of tme columns
+        settings.SET_FEATURES.features_list_tme = num_cols + tme_cols # todo:
+>>>>>>> Stashed changes
 
     return df
 
