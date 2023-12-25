@@ -7,35 +7,35 @@ model_params = {'iterations' = 500, 'random_seed' = 1}
 
 
 features_list = [
-    'loan_amount',
-    'duration_at_disbursement_months',
-    'interest_rate',
-    'quantity_of_prior_loans_at_the_time_of_disbursement_at_cbi',
-    'age',
-    'monthly_income_aed',
-    'quantity_of_prior_loans_at_cbi',
-    'work_experience',
-    'presence_of_car',
-    'presence_of_housing',
-    'dsr',
-    'type_of_product',
-    'location',
-    'emirates',
-    'gender',
-    'family_status',
-    'employment_sphere',
-    'employment_level',
-    'coborrower',
-    'collateral']
+	'loan_amount',
+	'duration_at_disbursement_months',
+	'interest_rate',
+	'quantity_of_prior_loans_at_the_time_of_disbursement_at_cbi',
+	'age',
+	'monthly_income_aed',
+	'quantity_of_prior_loans_at_cbi',
+	'work_experience',
+	'presence_of_car',
+	'presence_of_housing',
+	'dsr',
+	'type_of_product',
+	'location',
+	'emirates',
+	'gender',
+	'family_status',
+	'employment_sphere',
+	'employment_level',
+	'coborrower',
+	'collateral']
 
 cat_feature_list = [
 	'type_of_product',
 	'location','emirates','gender',
 	'family_status',
-   	'employment_sphere',
-   	'employment_level',
-   	'coborrower',
-   	'collateral']
+	'employment_sphere',
+	'employment_level',
+	'coborrower',
+	'collateral']
 
 type_ = 'baseline scoring model'
 output_dir = 'data'
@@ -45,7 +45,8 @@ sfa_dir = 'data/sfa_results'
 
 [TUNING]
 use_tuning = true
-tuning_params = { 'learning_rate' = [0.03,0.1], 'depth' = [1,7],'n_estimators' = [40,150],'bootstrap_type' = ['Bernoulli'],'random_seed' = 10}
+tuning_params = { 'learning_rate' = [0.03,0.1], 'depth' = [1,7], 'n_estimators' = [40,150], l2_leaf_reg=[50,200], 
+				'bootstrap_type' = ['Bernoulli'], 'boosting_type' = ['Ordered','Plain'], subsample = [0,1], 'random_seed' = 10}
 
 [SFA_PARAMS]
 model_params = {'iterations' = 500, 'learning_rate' = 0.2, 'depth' = 4}
