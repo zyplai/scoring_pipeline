@@ -1,9 +1,12 @@
+[METADATA]
+author_name = 'Elon Musk'
+
 [MLFLOW]
 tracking_uri="http://13.81.254.179:5050"
 experiment_name = 'cbi_scoring'
 
 [SET_FEATURES]
-model_params = {'iterations' = 500, 'random_seed' = 1}
+model_params = {'iterations' = 10, 'random_seed' = 1}
 
 
 features_list = [

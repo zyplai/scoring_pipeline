@@ -1,4 +1,5 @@
 import scipy.stats as stats
+from configs.config import settings
 
 
 def compare_datasets(train_data, blind_data, alpha=0.05):
@@ -17,8 +18,8 @@ def compare_datasets(train_data, blind_data, alpha=0.05):
         similarity status for each numeric column.
     """
 
-    train_numeric_cols = train_data.select_dtypes(include='number').columns
-    blind_numeric_cols = blind_data.select_dtypes(include='number').columns
+    train_numeric_cols = list(set(train_data.select_dtypes(include='number').columns) & set(settings.SET_FEATURES.features_list))
+    blind_numeric_cols = list(set(blind_data.select_dtypes(include='number').columns) & set(settings.SET_FEATURES.features_list))
 
     train_data = train_data[train_numeric_cols].dropna()
     blind_data = blind_data[blind_numeric_cols].dropna()

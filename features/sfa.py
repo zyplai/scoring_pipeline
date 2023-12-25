@@ -14,6 +14,8 @@ from tqdm import tqdm
 
 from configs.config import settings
 from utils.basic_utils import gini, save_toml
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class SFA:
@@ -179,7 +181,7 @@ class SFA:
 
         return output_pivot
 
-    def spearman_corr(self, run_time) -> pd.DataFrame:
+    def spearman_corr(self, run_time) -> str:
         """
         Calculate correlation between numeric columns
         and target using Spearman's method.
@@ -191,25 +193,35 @@ class SFA:
 
         """
         # Calculate correlation between numeric columns and target
-        numeric_columns = self.df.select_dtypes(include='number').columns
-        correlations = []
+        # numeric_columns = self.df.select_dtypes(include='number').columns
+        # correlations = []
 
-        for col in tqdm(numeric_columns):
-            correlation = self.df[col].corr(self.df['target'],
-                                            method='spearman')
-            correlations.append((col, correlation))
+        # for col in tqdm(numeric_columns):
+        #     correlation = self.df[col].corr(self.df['target'],
+        #                                     method='spearman')
+        #     correlations.append((col, correlation))
 
-        # Create a dataframe from the correlations list
-        correlations_df = pd.DataFrame(correlations,
-                                       columns=['Column', 'Correlation'])
-        correlations_df = correlations_df.sort_values(
-            'Correlation', ascending=False
-        ).reset_index(drop=True)
+        # # Create a dataframe from the correlations list
+        # correlations_df = pd.DataFrame(correlations,
+        #                                columns=['Column', 'Correlation'])
+        # correlations_df = correlations_df.sort_values(
+        #     'Correlation', ascending=False
+        # ).reset_index(drop=True)
+
+        correlations_df = self.df[settings.SET_FEATURES.features_list+[settings.TRAIN_SAMPLE_PROPS.cumulative_days ]].corr( method='spearman', numeric_only=True )
+
+        plt.figure(figsize=(18, 10))
+        cor_fig=sns.heatmap(correlations_df,cmap='coolwarm',annot = True, annot_kws={"fontsize":16}, vmin = -1, vmax = 1)
+        plt.xticks(rotation=45,ha='right')
 
         sfa_dir = os.path.join(
             os.getcwd(), settings.SET_FEATURES.sfa_dir,
             f'sfa_result_{run_time}'
         )
+        
+        fig = cor_fig.get_figure()
+        fig.savefig(f'{sfa_dir}/corr_matrix.png',bbox_inches='tight')
+
         try:
             correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
             save_toml(sfa_dir)
@@ -219,4 +231,4 @@ class SFA:
             correlations_df.to_csv(f'{sfa_dir}/spearman_corr_result.csv')
             save_toml(sfa_dir)
 
-        return correlations_df
+        return str(sfa_dir) + '/corr_matrix.png'

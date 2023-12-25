@@ -128,6 +128,7 @@ class TargetMeanEncoder:
         for col in self.cat_features:
             stats = self.mapping[col]
 
-            df[col] = df[col].map(stats['mean'])
+            df[col+'_tme'] = df[col].copy()
+            df[col+'_tme'] = df[col+'_tme'].map(stats['mean'])
 
         return df

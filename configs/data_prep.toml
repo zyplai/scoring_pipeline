@@ -2,7 +2,10 @@
 mapper = {}
 
 [TARGET_MEAN_ENCODE]
-target_encode=true
+target_encode=false
+
+[MACRO]
+enrichment=true
 
 [TRAIN_SAMPLE_PROPS]
 train_sample_path = 'data/loan_data_w_aecb.xlsx'
@@ -14,13 +17,8 @@ test_size = 0.15
 blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
-<<<<<<< Updated upstream
-partner_name = 'FINCA Guatemala'
-partners_country = 'Guatemala'
-=======
 partner_name = 'CBI'
 partners_country = 'UAE'
->>>>>>> Stashed changes
 num_of_lags = 3
 window = 7
 date_col = 'date_of_disbursement'

@@ -6,6 +6,7 @@ from datetime import datetime
 import numpy as np
 import catboost as cb
 import pandas as pd
+
 from sklearn.metrics import roc_auc_score, make_scorer
 from sklearn.model_selection import cross_val_score, KFold
 
@@ -61,7 +62,6 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
     Returns:
         object: The trained CatBoost modeol
     """
-
     if settings.TARGET_MEAN_ENCODE.target_encode :
         feature_list = settings.SET_FEATURES.features_list_tme
         cat_feature_list = []
@@ -178,9 +178,10 @@ def predict(
         return blind_data
 
     else:
-        df['predictions'] = model.predict_proba(
-            df[settings.SET_FEATURES.features_list]
-        )[:, 1]
+        if settings.TARGET_MEAN_ENCODE.target_encode:
+            df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list_tme])[:, 1]
+        else:
+            df['predictions'] = model.predict_proba(df[settings.SET_FEATURES.features_list])[:, 1]
 
         auc_train = roc_auc_score(
             df[df['is_train'] == 1]['target'], df[df['is_train'] == 1]['predictions']
