@@ -1,16 +1,54 @@
 import logging
 import os
+from functools import partial
 from datetime import datetime
 
+import numpy as np
 import catboost as cb
 import pandas as pd
-from sklearn.metrics import roc_auc_score
+
+from sklearn.metrics import roc_auc_score, make_scorer
+from sklearn.model_selection import cross_val_score, KFold
+
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import read_file, save_pickle, save_toml
 
-from .model_validator import create_validator
-from .mlops import mlflow_track
+from models.model_validator import create_validator
+
+import optuna
+from optuna.samplers import TPESampler
+from catboost.utils import eval_metric
+
+
+def objective( trial, X, y, X_train, y_train ):
+    params = {}
+    list_params = ['bootstrap_type', 'boosting_type' ]
+
+    for param in settings.TUNING.tuning_params :
+        if param in list_params :
+            params[param] = trial.suggest_categorical(param, settings.TUNING.tuning_params[param] )
+        else :
+            params[ param ] = trial.suggest_float(param, settings.TUNING.tuning_params[param][0],  
+                                                    settings.TUNING.tuning_params[param][1]),
+
+    model = cb.CatBoostClassifier(**params, random_seed=settings.TUNING.tuning_params['random_seed'])
+    model.fit(X_train, y_train, verbose=0)
+
+    kf = KFold(n_splits=5, shuffle=True, random_state=settings.TUNING.tuning_params['random_seed'])
+    roc_auc_scorer = make_scorer(roc_auc_score, needs_proba=True)
+    scores = cross_val_score(model, X, y, scoring=roc_auc_scorer, cv=kf, verbose=0)
+
+    return np.mean(scores)
+
+
+def optimize_hyperparameters( X,y, X_train, y_train ) :
+    study = optuna.create_study()
+    partial_objective = partial(objective, X=X, y=y, X_train=X_train, y_train=y_train)
+    study.optimize(partial_objective, n_trials=50)
+    best_params = study.best_params
+
+    return best_params
 
 
 def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
@@ -24,34 +62,47 @@ def fit(df: pd.DataFrame, run_time) -> cb.CatBoostClassifier:
     Returns:
         object: The trained CatBoost modeol
     """
+    if settings.TARGET_MEAN_ENCODE.target_encode :
+        feature_list = settings.SET_FEATURES.features_list_tme
+        cat_feature_list = []
+    else :
+        feature_list = settings.SET_FEATURES.features_list
+        cat_feature_list = settings.SET_FEATURES.cat_feature_list
+
+    # split into train and test
+    X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[feature_list]
+    y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
+    
+    X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[feature_list]
+    y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
+
+    X = pd.concat([X_train,X_test])
+    y = pd.concat([y_train,y_test])
+    
     # init model and fit
     logging.info('------- Fitting the model...')
-    cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params, verbose=False)
-    if settings.TARGET_MEAN_ENCODE.target_encode:
-        # split into train and test
-        X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list_tme]
-        y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-        
-        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list_tme]
-        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-        
-        cbm.fit(X_train, y_train, eval_set=(X_test, y_test), cat_features=[])
-        logging.info('------- Model trained...')
-    else:
-        # split into train and test
-        X_train = df.loc[df['is_train'] == 1].reset_index(drop=True)[settings.SET_FEATURES.features_list]
-        y_train = df.loc[df['is_train'] == 1, ['target']].reset_index(drop=True)
-        
-        X_test = df.loc[df['is_train'] == 0].reset_index(drop=True)[settings.SET_FEATURES.features_list]
-        y_test = df.loc[df['is_train'] == 0, ['target']].reset_index(drop=True)
-        
-        cbm.fit(
-            X_train,
-            y_train,
-            eval_set=(X_test, y_test),
-            cat_features=settings.SET_FEATURES.cat_feature_list,
+
+    if settings.TUNING.use_tuning == False :
+        cbm = cb.CatBoostClassifier(**settings.SET_FEATURES.model_params, verbose=False)
+        cbm.fit(X_train, y_train, eval_set=(X_test, y_test), cat_features=cat_feature_list)
+
+    else :
+        best_params = optimize_hyperparameters( X,y, X_train, y_train )
+        print(best_params)
+
+        cbm = cb.CatBoostClassifier(
+            **best_params,
+            random_seed = settings.SET_FEATURES.model_params['random_seed']
         )
-        logging.info('------- Model trained...')
+
+        cbm.fit(X_train, y_train,
+            eval_set=(X_test,y_test),
+            cat_features=cat_feature_list,
+            verbose=False
+        )
+
+    logging.info('------- Model trained...')
+    # create a timestamp for the current run
 
     # create the directory for the current run
     run_dir = os.path.join(
@@ -140,7 +191,7 @@ def predict(
             df[df['is_train'] == 0]['target'], df[df['is_train'] == 0]['predictions']
         )
 
-        mlflow_track(model, df, auc_train, auc_test, run_time)
+        # mlflow_track(model, df, auc_train, auc_test, run_time)
 
         print("Train AUC: ", auc_train, '\nTest AUC', auc_test)
 
