@@ -8,7 +8,7 @@ import pandas as pd
 
 from configs.config import settings
 from data_prep.normalize_raw_data import define_target, map_col_names
-from data_prep.sample_prep import prepare_main_sample
+from data_prep.sample_prep import prepare_val_sample
 from features.cat_features import TargetMeanEncoder
 from features.macro_features import prepare_macro_features
 from features.sfa import SFA
@@ -69,7 +69,7 @@ def enrich_with_features(df: pd.DataFrame, enabled):
 
 def run_scoring_pipe():
     sample = preprocess_raw_sample()
-    clean_sample = prepare_main_sample(
+    clean_sample = prepare_val_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
         
@@ -89,7 +89,7 @@ def run_scoring_pipe():
 
 def run_sfa():
     sample = preprocess_raw_sample()
-    clean_sample = prepare_main_sample(
+    clean_sample = prepare_val_sample(
         df=sample, test_size=settings.TRAIN_SAMPLE_PROPS.test_size
     )
 

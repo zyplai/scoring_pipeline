@@ -6,6 +6,7 @@ from fpdf import FPDF
 from pandas.api.types import is_numeric_dtype, is_string_dtype
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
 from configs.config import settings
+from utils.basic_utils import read_file
 from validation.psi import get_all_psi
 from validation.adversarial_val import perform_adv_val
 from validation.ks_test import compare_datasets
@@ -19,12 +20,14 @@ def create_report_fpdf(data, model, runtime) -> None:
     threshold_breakdown, data_breakdown, model_performance = get_performance_metric(
         data
     )
-
-    doc_font = 'Arial'
+    doc_font = 'arial'
     section_split_space = 10
-    runtime = datetime.strptime(runtime, '%Y-%m-%d_%H-%M-%S')
+    runtime = datetime.strptime(runtime, '%Y-%m-%d_%H-%M-%S').strftime("%Y-%m-%d %H:%M")
 
     pdf = FPDF()
+    pdf.add_font("arial", style="", fname="validation/font/arial.ttf")
+    pdf.add_font("arial", style="b", fname="validation/font/arialbd.ttf")
+    pdf.add_font("arial", style="bi", fname="validation/font/arialbi.ttf")
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=1.0) # max width is 190
 
@@ -34,25 +37,27 @@ def create_report_fpdf(data, model, runtime) -> None:
     #################################################################################
     # Metadata:
 
-    pdf.set_font(doc_font, style='B', size=16)
-    pdf.cell(w=0, h=10, txt='Training run: ' + alias, border='B', ln=1)
+    pdf.set_font(doc_font, style='b', size=16)
+    pdf.cell(w=pdf.get_string_width('Training run '), h=10, txt='Training run ', ln=0, border='B')
+    pdf.set_font(doc_font, style='bi', size=15)
+    pdf.cell(w=0, h=10, txt='"'+alias+'"', border='B', ln=1)
     pdf.ln(h=2)
 
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=pdf.get_string_width('Date: '), h=5, txt='Date: ', ln=0)
     pdf.set_font(doc_font, style='', size=10)
     pdf.cell(
         w=pdf.get_string_width(str(runtime)), h=5, txt=str(runtime), ln=1
     )
 
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=pdf.get_string_width('Author: '), h=5, txt='Author: ', ln=0)
     pdf.set_font(doc_font, style='', size=10)
     pdf.cell(
         w=pdf.get_string_width(settings.METADATA.author_name), h=5, txt=settings.METADATA.author_name, ln=1
     )
 
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=pdf.get_string_width('Partner: '), h=5, txt='Partner: ', ln=0)
     pdf.set_font(doc_font, style='', size=10)
     pdf.cell(
@@ -62,7 +67,7 @@ def create_report_fpdf(data, model, runtime) -> None:
         ln=1,
     )
     
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=pdf.get_string_width('Target mean encoding: '), h=5, txt='Target mean encoding: ', ln=0)
     pdf.set_font(doc_font, style='', size=10)
     pdf.cell(
@@ -72,7 +77,7 @@ def create_report_fpdf(data, model, runtime) -> None:
         ln=1,
     )
     
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=pdf.get_string_width('Macro enrichment: '), h=5, txt='Macro enrichment: ', ln=0)
     pdf.set_font(doc_font, style='', size=10)
     pdf.cell(
@@ -81,18 +86,28 @@ def create_report_fpdf(data, model, runtime) -> None:
         txt="Enabled" if settings.MACRO.enrichment else "Disabled",
         ln=1,
     )
+    
+    pdf.set_font(doc_font, style='b', size=10)
+    pdf.cell(w=pdf.get_string_width('Validation: '), h=5, txt='Validation: ', ln=0)
+    pdf.set_font(doc_font, style='', size=10)
+    pdf.cell(
+        w=10,
+        h=5,
+        txt="Out-of-time" if settings.VALIDATION.out_of_time else "Out-of-sample",
+        ln=1,
+    )
 
     pdf.ln(h=section_split_space - 7)
 
     #################################################################################
     # Data overview:
     feature_info = get_feature_report(data=data)
-
-    pdf.set_font(doc_font, 'B', 13)
+        
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='Data overview', border='T', ln=1)
     
     ##### Train/test split ############################
-    pdf.set_font(family=doc_font, style='B', size=8)
+    pdf.set_font(family=doc_font, style='b', size=8)
     # Iterate over COLUMNS and display them
     for key, value in data_breakdown.items():
         pdf.cell(w=190/11, h=7, txt=key, border=1, ln=0, fill=True)
@@ -108,10 +123,10 @@ def create_report_fpdf(data, model, runtime) -> None:
     #################################################
     
     ####### Feature info ############################
-    pdf.set_font(doc_font, style='B', size=8)
+    pdf.set_font(doc_font, style='b', size=8)
     # Iterate over COLUMNS and display them
     for col in feature_info.columns:
-        pdf.cell(w=190/6, h=7, txt=str(col), border=1, ln=0, fill=True)
+        pdf.cell(w=190/6, h=7, txt=str(col)[:22], border=1, ln=0, fill=True)
 
     pdf.ln()
 
@@ -119,17 +134,17 @@ def create_report_fpdf(data, model, runtime) -> None:
     pdf.set_font(family=doc_font, style='', size=8)
     for _, row in feature_info.iterrows():
         for col in feature_info.columns:
-            pdf.cell(w=190/6, h=7, txt=str(row[col]), border=1, ln=0, fill=False)
+            pdf.cell(w=190/6, h=7, txt=str(row[col])[:16], border=1, ln=0, fill=False)
         pdf.ln()
 
     #################################################################################
     # Model performance and hyperparameters:
 
     pdf.ln(h=section_split_space - 7)
-    pdf.set_font(doc_font, 'B', 13)
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='Model performance and hyperparameters', border='T', ln=1)
 
-    pdf.set_font(family=doc_font, style='B', size=8)
+    pdf.set_font(family=doc_font, style='b', size=8)
 
     # Iterate over COLUMNS and display them
     for key, value in model_performance.items():
@@ -145,7 +160,7 @@ def create_report_fpdf(data, model, runtime) -> None:
     ########### Model hyperparameters #########
 
     pdf.ln(h=section_split_space)
-    pdf.set_font(family=doc_font, style='B', size=8)
+    pdf.set_font(family=doc_font, style='b', size=8)
 
     # Iterate over COLUMNS and display them
     for key, value in settings.SET_FEATURES.model_params.items():
@@ -163,10 +178,10 @@ def create_report_fpdf(data, model, runtime) -> None:
     # Threshold breakdown:
 
     pdf.ln(h=section_split_space)
-    pdf.set_font(doc_font, 'B', 13)
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='Threshold breakdown', border='T', ln=1)
 
-    pdf.set_font(family=doc_font, style='B', size=8)
+    pdf.set_font(family=doc_font, style='b', size=8)
 
     # Iterate over COLUMNS and display them
     for col in threshold_breakdown.columns:
@@ -193,7 +208,7 @@ def create_report_fpdf(data, model, runtime) -> None:
     
     opt_thres = get_optimal_threshold(data)
     
-    pdf.set_font(doc_font, style='B', size=10)
+    pdf.set_font(doc_font, style='b', size=10)
     pdf.cell(w=120, 
              h=5, 
              txt='Optimal threshold (Youden\'s J statistic): ', align='R', ln=0)
@@ -204,9 +219,13 @@ def create_report_fpdf(data, model, runtime) -> None:
 
     #################################################################################
     # Kolmogorov Smirnov test:
-
+    blind_set = read_file(settings.BLIND_SAMPLE_PROPS.blind_path)
+        
+    cat_columns = settings.SET_FEATURES.cat_feature_list
+    blind_set[cat_columns] = blind_set[cat_columns].fillna('N/A') 
+    
     ks_result = compare_datasets(
-        data[data['is_train'] == 1], data[data['is_train'] == 0]
+        data, blind_set
     )
 
     # Convert to DataFrame
@@ -215,21 +234,14 @@ def create_report_fpdf(data, model, runtime) -> None:
         columns=['Feature', 'P-value', 'Similarity'],
     ).sort_values(by='P-value', ascending=True)
 
-    ks_result_df['Similarity'] = ks_result_df['Similarity'].str.replace(
-        'Likely from the same distribution', 'High'
-    )
-    ks_result_df['Similarity'] = ks_result_df['Similarity'].str.replace(
-        'Likely from different distribution', 'Low'
-    )
-
     pdf.ln(h=section_split_space - 7)
-    pdf.set_font(doc_font, 'B', 13)
-    pdf.cell(w=0, h=10, txt='Train/test split validations', border='T', ln=1)
+    pdf.set_font(doc_font, 'b', 13)
+    pdf.cell(w=0, h=10, txt='Train/blind split validations', border='T', ln=1)
 
-    pdf.set_font(family=doc_font, style='B', size=10)
-    pdf.cell(w=190, h=7, txt=str('Kolmogorov Smirnov test'), border=1, ln=1, fill=True)
+    pdf.set_font(family=doc_font, style='b', size=10)
+    pdf.cell(w=190, h=7, txt=str('Kolmogorov-Smirnov test'), border=1, ln=1, fill=True)
 
-    pdf.set_font(family=doc_font, style='B', size=8)
+    pdf.set_font(family=doc_font, style='b', size=8)
     # Iterate over COLUMNS and display them
     for col in ks_result_df.columns:
         pdf.cell(w=190/3, h=7, txt=str(col), border=1, ln=0, fill=True)
@@ -254,7 +266,7 @@ def create_report_fpdf(data, model, runtime) -> None:
     adv_val_result = perform_adv_val(data)
 
     pdf.ln(h=section_split_space - 7)
-    pdf.set_font(family=doc_font, style='B', size=10)
+    pdf.set_font(family=doc_font, style='b', size=10)
     pdf.cell(w=90, h=7, txt=str('Adversarial validation'), border=1, ln=1, fill=True)
     pdf.cell(w=45, h=7, txt=str('AUC'), border=1, ln=0)
     pdf.cell(w=45, h=7, txt=str(adv_val_result), border=1, ln=0)
@@ -263,21 +275,22 @@ def create_report_fpdf(data, model, runtime) -> None:
     # PSI:
 
     psi_result = get_all_psi(
-        data[data['is_train'] == 1], 
-        data[data['is_train'] == 0], 
+        data, 
+        blind_set, 
         list(settings.SET_FEATURES.cat_feature_list), 
         '')
-    
-    pdf.ln(h=section_split_space)
-    pdf.set_font(doc_font, 'B', 13)
+ 
+    # pdf.ln(h=section_split_space)
+    pdf.add_page()
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='PSI', border='T', ln=1)
 
     for key, feature in psi_result.items():
-        pdf.set_font(doc_font, style='B', size=8)
+        pdf.set_font(doc_font, style='b', size=8)
 
         # Iterate over COLUMNS and display them
         for col in feature.columns:
-            pdf.cell(w=190/4, h=7, txt=str(col)[:32], border=1, ln=0, fill=True)
+            pdf.cell(w=190/4, h=7, txt=str(col)[:31], border=1, ln=0, fill=True)
 
         pdf.ln()
 
@@ -285,18 +298,29 @@ def create_report_fpdf(data, model, runtime) -> None:
         pdf.set_font(family=doc_font, style='', size=8)
         for _, row in feature.iterrows():
             for col in feature.columns:
-                pdf.cell(w=190/4, h=7, txt=str(row[col])[:32], border=1, ln=0, fill=False)
+                pdf.cell(w=190/4, h=7, txt=str(row[col])[:31], border=1, ln=0, fill=False)
             pdf.ln()
             
         pdf.ln(h=2)
-    
+        
+    #################################################################################
+    # Adversarial validation feature importance:
+
+    png_path = get_feature_importance(data, model)
+
+    pdf.add_page()
+    pdf.set_font(doc_font, 'b', 13)
+    pdf.cell(w=0, h=10, txt='Adversarial validation feature importance', border='T', ln=1)
+
+    pdf.image('data/adv_val_feature_importance.png', w=190, type='png', link='')
+
     #################################################################################
     # Model feature importance:
 
     png_path = get_feature_importance(data, model)
 
     pdf.ln(h=section_split_space)
-    pdf.set_font(doc_font, 'B', 13)
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='Model feature importance', border='T', ln=1)
 
     pdf.image(png_path, w=190, type='png', link='')
@@ -307,7 +331,7 @@ def create_report_fpdf(data, model, runtime) -> None:
     png_path_shap = get_shapley_feature_importance(data, model)
     
     pdf.add_page()
-    pdf.set_font(doc_font, 'B', 13)
+    pdf.set_font(doc_font, 'b', 13)
     pdf.cell(w=0, h=10, txt='Shapley feature importance', border='T', ln=1)
 
     pdf.image(png_path_shap, w=190, type='png', link='')
@@ -346,7 +370,7 @@ def get_shapley_feature_importance(data, clf):
     explainer = shap.TreeExplainer(clf)
     shap_values = explainer.shap_values(X, y)
     
-    shap.plots.violin(shap_values, features=X, feature_names=list(X.columns), plot_type="layered_violin", show=False)
+    shap.plots.violin(shap_values, features=X, feature_names=list(X.columns), plot_type="layered_violin", show=False, max_display=30)
     plt.savefig(path, bbox_inches='tight', dpi=400)
     
     return path
@@ -383,6 +407,7 @@ def get_performance_metric(preds: pd.DataFrame):
     """
     train_set = preds[preds['is_train'] == 1].copy()
     test_set = preds[preds['is_train'] == 0].copy()
+    test_set.to_excel('test_set_preds.xlsx')
     target = 'target'
 
     model_threshold_list = []

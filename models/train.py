@@ -2,31 +2,24 @@ import logging
 import os
 from functools import partial
 from datetime import datetime
-
 import numpy as np
 import catboost as cb
 import pandas as pd
-
 from sklearn.metrics import roc_auc_score, make_scorer
 from sklearn.model_selection import cross_val_score, KFold
-
 from configs.config import settings
 from data_prep.normalize_raw_data import map_col_names
 from utils.basic_utils import read_file, save_pickle, save_toml
-
 from models.model_validator import create_validator
-
 import optuna
-from optuna.samplers import TPESampler
-from catboost.utils import eval_metric
 
 
 def objective( trial, X, y, X_train, y_train ):
     params = {}
-    list_params = ['bootstrap_type', 'boosting_type' ]
+    list_params = ['bootstrap_type', 'boosting_type' 'random_seed']
 
     for param in settings.TUNING.tuning_params :
-        if param in list_params :
+        if param in list_params:
             params[param] = trial.suggest_categorical(param, settings.TUNING.tuning_params[param] )
         else :
             params[ param ] = trial.suggest_float(param, settings.TUNING.tuning_params[param][0],  

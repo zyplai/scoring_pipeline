@@ -5,20 +5,23 @@ mapper = {}
 target_encode=false
 
 [MACRO]
-enrichment=true
+enrichment=false
 
 [TRAIN_SAMPLE_PROPS]
-train_sample_path = 'data/loan_data_w_aecb.xlsx'
-cumulative_days = 'cmltv_days'
-target_days = 89
+train_sample_path = 'data/train_data.xlsx'
+cumulative_days = 'Cumulative days of late payments'
+target_days = 30
 test_size = 0.15
+
+[VALIDATION]
+out_of_time = true
 
 [BLIND_SAMPLE_PROPS]
 blind_path = 'data/blind_data.xlsx'
 
 [FEATURES_PARAMS]
-partner_name = 'CBI'
+partner_name = 'FINCA Guatemala'
 partners_country = 'UAE'
 num_of_lags = 3
 window = 7
-date_col = 'date_of_disbursement'
+date_col = 'Date of disbursement'
